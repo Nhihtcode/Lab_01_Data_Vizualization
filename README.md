@@ -2,6 +2,22 @@
 
 > **Nhóm 13**
 
+---
+
+## 📋 Phân công nhiệm vụ
+
+### 1. Nhiệm vụ thành viên (General Tasks)
+- **Cào dữ liệu**: Mỗi người dùng template `crawlers/shopee_crawler.py` (kế thừa `helpers.py`) để thu thập dữ liệu phục vụ cho **2 mục tiêu SMART** riêng.
+- **Tiền xử lý**: Tự làm sạch (missing values, outliers), ép kiểu dữ liệu chuẩn và tính các cột derived trong Notebook cá nhân (`notebooks/0x_eda_*.ipynb`).
+- **Lưu trữ**: File thô lưu vào `data/raw/` theo đúng quy ước đặt tên để Lead merge.
+
+### 2. Nhiệm vụ Nhóm trưởng (Lead Tasks)
+- **Thiết kế Schema**: Duy trì file chuẩn [`schema/data_schema.md`](./schema/data_schema.md).
+- **Gom dữ liệu Master**: Sau khi cả nhóm cào xong, Lead sử dụng script `notebooks/00_data_merge.py` để hợp nhất 5 file dữ liệu thô từ `data/raw/` thành 1 file master duy nhất tại `data/processed/`, đảm bảo quy mô ≥ **5.000 dòng**.
+- **Dashboard**: Tích hợp các kết quả phân tích của thành viên vào ứng dụng `dashboard/app.py`.
+
+---
+
 ## Cấu trúc thư mục
 
 ```
