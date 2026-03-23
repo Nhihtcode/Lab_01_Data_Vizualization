@@ -68,3 +68,12 @@ streamlit run dashboard/app.py
 fact_product_{platform}_{YYYYMMDD}_{tên}.csv
 ```
 Ví dụ: `fact_product_shopee_20260325_tuan.csv`
+
+## Quy ước push lên github
+
+Mỗi thành viên sẽ tạo 1 nhánh riêng để push code lên, sau đó nhóm trưởng merge vào nhánh chính
+- Đặt tên nhánh theo cú pháp {tên}-data-visualization
+- Ví dụ: "tuan-data-visualization"
+
+## Quy ước sửa code trên github
+- Chỉ được sửa code trong file của mình. Không sửa phần code của người khác
