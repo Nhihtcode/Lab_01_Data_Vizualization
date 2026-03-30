@@ -29,12 +29,12 @@ from utils.helpers import (
 # CẤU HÌNH — mỗi thành viên chỉnh tại đây
 # ════════════════════════════════════════════════════════════════════════════
 PLATFORM_ID   = "shopee"
-CRAWLED_BY    = "tuan"            # ← đổi thành tên của bạn: thinh/tuan/y/the_anh/duong
-CATEGORY_ID   = "11036132"        # ← ID danh mục trên Shopee (lấy từ URL)
-CATEGORY_NAME = "Điện Tử"         # ← Tên danh mục
+CRAWLED_BY    = "duong"            # ← đổi thành tên của bạn: thinh/tuan/y/the_anh/duong
+CATEGORY_ID   = "11036971"        # ← ID danh mục trên Shopee (lấy từ URL)
+CATEGORY_NAME = "Gia Dụng"         # ← Tên danh mục
 MAX_PAGES     = 10                # số trang cào (mỗi trang ~60 sản phẩm)
-SLEEP_MIN     = 1.5               # delay ngẫu nhiên giữa request (giây)
-SLEEP_MAX     = 3.5
+SLEEP_MIN     = 3.0              # delay ngẫu nhiên giữa request (giây)
+SLEEP_MAX     = 6.0             # delay ngẫu nhiên giữa request (giây)
 # ════════════════════════════════════════════════════════════════════════════
 
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "raw"
@@ -50,6 +50,10 @@ HEADERS = {
         "Chrome/123.0.0.0 Safari/537.36"
     ),
     "Referer": "https://shopee.vn/",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Api-Source": "pc",
 }
 
 # Cột theo đúng thứ tự trong fact_product (schema v2)
