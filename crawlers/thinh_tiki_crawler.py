@@ -1,14 +1,3 @@
-"""
-crawlers/thinh_tiki_crawler.py — Crawler sản phẩm Tiki cho THỊNH
-Danh mục: Nhà Cửa & Đời Sống (ID: 1883)
-
-Vòng lặp 1: Gọi API danh sách (blocks/listings) lấy product_ids
-Vòng lặp 2: Gọi API sản phẩm chi tiết (v2/products/{id}) và API đánh giá (v2/reviews?product_id={id})
-
-Cách dùng:
-    python crawlers/thinh_tiki_crawler.py
-"""
-
 import time
 import random
 import csv
@@ -25,17 +14,21 @@ from utils.helpers import (
     make_product_id, make_shop_id, make_category_id,
 )
 
-# ════════════════════════════════════════════════════════════════════════════
-# CẤU HÌNH — THỊNH (TIKI)
-# ════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════
+# CẤU HÌNH 
+# ═══════════════════════
 PLATFORM_ID   = "tiki"
 CRAWLED_BY    = "thinh"
-CATEGORY_ID   = "1883"               # Nhà Cửa & Đời Sống
-CATEGORY_NAME = "Nhà Cửa & Đời Sống"
-MAX_PAGES     = 25                   # 25 trang * 40 SP = 1.000 SP (Vòng 1)
+CATEGORIES = [
+    {"id": "1883", "name": "Nhà Cửa & Đời Sống"},
+    {"id": "1882", "name": "Điện Gia Dụng"},
+    {"id": "1520", "name": "Làm Đẹp & Sức Khỏe"},
+]
+# Mỗi danh mục cào 19 trang (~720 SP) -> 3 danh mục = ~2160 SP
+MAX_PAGES     = 18
 SLEEP_MIN     = 0.3                  # Thời gian sleep vòng 2
 SLEEP_MAX     = 0.8
-# ════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════
 
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "raw"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -77,9 +70,9 @@ SHOP_FIELDNAMES = [
     "crawled_at",
 ]
 
-# ═══════════════════════════════════════════════════════════════════════
+# ══════════════════════
 # FETCH
-# ═══════════════════════════════════════════════════════════════════════
+# ══════════════════════
 
 def fetch_search_products(category_id: str, page: int) -> list[dict]:
     """Vòng 1: Tìm danh sách sản phẩm cơ bản."""
@@ -114,9 +107,9 @@ def fetch_product_reviews(product_id: str) -> dict:
     return {}
 
 
-# ═══════════════════════════════════════════════════════════════════════
+# ══════════════════
 # PARSE
-# ═══════════════════════════════════════════════════════════════════════
+# ══════════════════
 
 def parse_fact_product(basic: dict, detail: dict, reviews: dict) -> dict:
     # Lấy data detail ưu tiên hơn, nếu ko có thì fallback basic
@@ -162,7 +155,6 @@ def parse_fact_product(basic: dict, detail: dict, reviews: dict) -> dict:
     review_with_image_count = ""
     five_star_with_image_count = ""
     if reviews:
-        # Cố gắng lấy từ metadata có `has_photo`
         # Mặc định review API của Tiki có `stars` (1-5) để thống kê
         stars = reviews.get("stars", {}) or {}
         # Count review_photo
@@ -174,7 +166,7 @@ def parse_fact_product(basic: dict, detail: dict, reviews: dict) -> dict:
             five_star_count = star_5.get("count", "")
         else:
             five_star_count = ""
-        # Không có số ảnh riêng cho 5 sao, nên đành lấy five star proxy
+
         five_star_with_image_count = five_star_count if five_star_count else ""
 
     url_key = d.get("url_key", "")
@@ -184,17 +176,13 @@ def parse_fact_product(basic: dict, detail: dict, reviews: dict) -> dict:
     est_delivery = ""
     shipping_fee = ""
     if "delivery_info" in d:
-        # Trong API products detail, shipping đôi khi có fee
         delivery_info = d.get("delivery_info", {}) or {}
         est_delivery = str(delivery_info.get("delivery_promise", ""))
-    
-    # Tiki v2/products có thể có free_shipping / shipping fee rõ ràng hơn 
-    # Nhưng nếu không có ta để trống
     
     return {
         "product_id":   make_product_id(PLATFORM_ID, raw_id),
         "platform_id":  PLATFORM_ID,
-        "category_id":  make_category_id(PLATFORM_ID, CATEGORY_ID),
+        "category_id":  make_category_id(PLATFORM_ID, basic.get("_crawled_category_id", "")),
         "shop_id":      make_shop_id(PLATFORM_ID, raw_shop_id),
         "product_name": d.get("name", ""),
         "product_url":  prod_url,
@@ -246,10 +234,9 @@ def parse_dim_shop(basic: dict, detail: dict) -> dict:
     # Location
     location = d.get("inventory_status", "")
     if location == "available" or location == "in_stock":
-        location = "" # tiki không thường expose city như shopee trong model này
+        location = ""
 
-    # V2 products seller thường có thêm chỉ số (nếu có trên web)
-    # Tuy nhiên nếu không có ta mặc định rỗng
+    # Mặc định rỗng
     rating_star = ""
     follower = ""
     if "store_info" in seller:
@@ -274,12 +261,12 @@ def parse_dim_shop(basic: dict, detail: dict) -> dict:
     }
 
 
-# ═══════════════════════════════════════════════════════════════════════
+# ══════════════════
 # MAIN
-# ═══════════════════════════════════════════════════════════════════════
+# ══════════════════
 
 def main():
-    print(f"[INFO] Bắt đầu cào Tiki 2 VÒNG LẶP - Danh mục: {CATEGORY_NAME}")
+    print(f"[INFO] Bắt đầu cào Tiki 2 VÒNG LẶP - ĐA DANH MỤC")
     print(f"[INFO] CRAWLED_BY  : {CRAWLED_BY}")
     
     # -- VÒNG LẶP 1: Lấy danh sách ID cơ bản từ API Listings --
@@ -288,19 +275,27 @@ def main():
     print("="*50)
     all_basic_items = []
     
-    for page in range(1, MAX_PAGES + 1):
-        try:
-            items = fetch_search_products(CATEGORY_ID, page)
-            if not items:
-                print(f"[INFO] Không còn sản phẩm ở trang {page}. Dừng Vòng 1.")
-                break
-            
-            all_basic_items.extend(items)
-            print(f"  [Trang {page:02d}] Thu được {len(items):3d} IDs | Tổng cộng: {len(all_basic_items):4d} IDs")
-            time.sleep(random.uniform(0.1, 0.4))
-        except requests.RequestException as e:
-            print(f"  [LỖI VÒNG 1] Trang {page}: {e}")
-            time.sleep(2)
+    for cat in CATEGORIES:
+        cat_id = cat["id"]
+        cat_name = cat["name"]
+        print(f"\n[DANH MỤC] Đang quét: {cat_name} (ID: {cat_id})")
+        
+        for page in range(1, MAX_PAGES + 1):
+            try:
+                items = fetch_search_products(cat_id, page)
+                if not items:
+                    print(f"[INFO] Không còn sản phẩm ở trang {page}. Dừng Vòng 1.")
+                    break
+                
+                for item in items:
+                    item["_crawled_category_id"] = cat_id
+                    
+                all_basic_items.extend(items)
+                print(f"  [Trang {page:02d}] Thu được {len(items):3d} IDs | Tổng cộng: {len(all_basic_items):4d} IDs")
+                time.sleep(random.uniform(0.1, 0.4))
+            except requests.RequestException as e:
+                print(f"  [LỖI VÒNG 1] Trang {page}: {e}")
+                time.sleep(2)
 
     total_basic = len(all_basic_items)
     print(f"[DONE VÒNG 1] Thu được tổng cộng {total_basic} IDs sản phẩm cơ bản.")
@@ -331,16 +326,16 @@ def main():
                 continue
                 
             try:
-                # Gọi 2 API bổ sung theo logic
+                # Gọi 2 API bổ sung
                 detail = fetch_product_detail(raw_id)
                 reviews = fetch_product_reviews(raw_id)
                 
-                # Ghi fact_product
+                # Ghi vào file fact_product
                 fact_row = parse_fact_product(basic_item, detail, reviews)
                 fact_writer.writerow(fact_row)
                 total_written += 1
                 
-                # Ghi dim_shop
+                # Ghi vào file dim_shop
                 raw_shop_id = fact_row["shop_id"]
                 if raw_shop_id and raw_shop_id not in seen_shop_ids:
                     seen_shop_ids.add(raw_shop_id)
