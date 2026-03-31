@@ -1,11 +1,9 @@
 """
-crawlers/shopee_crawler.py — Template crawler sản phẩm Shopee
-Mỗi thành viên copy file này và chỉnh lại category_id + crawled_by
-
+crawlers/tiki_crawler.py — Crawler sản phẩm Tiki
 Cách dùng:
-    python shopee_crawler.py
+    python crawlers/tiki_crawler.py
 
-Output: data/raw/fact_product_shopee_YYYYMMDD_{crawled_by}.csv
+Output: data/raw/fact_product_tiki_YYYYMMDD_{crawled_by}.csv
 """
 
 import time
@@ -28,12 +26,12 @@ from utils.helpers import (
 # ════════════════════════════════════════════════════════════════════════════
 # CẤU HÌNH — mỗi thành viên chỉnh tại đây
 # ════════════════════════════════════════════════════════════════════════════
-PLATFORM_ID   = "shopee"
-CRAWLED_BY    = "tuan"            # ← đổi thành tên của bạn: thinh/tuan/y/the_anh/duong
-CATEGORY_ID   = "11036132"        # ← ID danh mục trên Shopee (lấy từ URL)
-CATEGORY_NAME = "Điện Tử"         # ← Tên danh mục
-MAX_PAGES     = 10                # số trang cào (mỗi trang ~60 sản phẩm)
-SLEEP_MIN     = 1.5               # delay ngẫu nhiên giữa request (giây)
+PLATFORM_ID   = "tiki"
+CRAWLED_BY    = "the_anh"       # ← đổi tên: thinh/tuan/y/the_anh/duong
+CATEGORY_ID   = "1520"          # ← ID danh mục Tiki (lấy từ URL)
+CATEGORY_NAME = "Làm Đẹp & Sức Khỏe"    # ← Tên danh mục
+MAX_PAGES     = 10              # mỗi trang 40 sản phẩm → tối đa 400
+SLEEP_MIN     = 1.5
 SLEEP_MAX     = 3.5
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -49,7 +47,9 @@ HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/123.0.0.0 Safari/537.36"
     ),
-    "Referer": "https://shopee.vn/",
+    "Referer":  "https://tiki.vn/",
+    "Accept":   "application/json, text/plain, */*",
+    "Accept-Language": "vi-VN,vi;q=0.9",
 }
 
 # Cột theo đúng thứ tự trong fact_product (schema v2)
@@ -69,42 +69,59 @@ FIELDNAMES = [
 
 
 def fetch_products(category_id: str, page: int) -> list[dict]:
-    """Gọi Shopee API không chính thức để lấy danh sách sản phẩm."""
-    url = "https://shopee.vn/api/v4/search/search_items"
+    """Gọi Tiki API lấy danh sách sản phẩm theo category."""
+    url = "https://tiki.vn/api/personalish/v1/blocks/listings"
     params = {
-        "by": "pop",
-        "categoryids": category_id,
-        "limit": 60,
-        "newest": page * 60,
-        "order": "desc",
-        "page_type": "search",
-        "scenario": "PAGE_CATEGORY",
-        "version": 2,
+        "limit":    40,
+        "page":     page + 1,
+        "category": category_id,
+        "sort":     "top_seller",
     }
     resp = requests.get(url, headers=HEADERS, params=params, timeout=15)
     resp.raise_for_status()
-    return resp.json().get("items", []) or []
+    data = resp.json().get("data", [])
+    if isinstance(data, dict):
+        data = data.get("data", [])
+    return data or []
 
 
 def parse_item(item: dict) -> dict:
-    """Chuyển một item từ API thành row theo schema."""
-    d = item.get("item_basic", item)  # tuỳ version API Shopee
+    """Chuyển một item Tiki thành row theo schema."""
+    d = item
 
-    raw_id      = str(d.get("itemid", ""))
-    raw_shop_id = str(d.get("shopid", ""))
+    raw_id      = str(d.get("id", ""))
+    seller      = d.get("seller", {}) or {}
+    raw_shop_id = str(seller.get("id", "unknown"))
 
-    price_raw  = d.get("price", 0) / 100_000     # Shopee trả giá đơn vị 1/100000 VNĐ
-    price_orig = d.get("price_before_discount", 0) / 100_000
+    price_raw  = float(d.get("price") or 0)
+    price_orig = float(d.get("list_price") or 0)
 
-    discount = 0.0
-    if price_orig > 0 and price_orig > price_raw:
+    discount = float(d.get("discount_rate") or 0)
+    if discount == 0 and price_orig > price_raw > 0:
         discount = round((1 - price_raw / price_orig) * 100, 1)
 
-    labels: list = d.get("promotions", []) or []
-    label_names  = [str(lb.get("promotion_label", "")).lower() for lb in labels]
-    has_fs_xtra  = any("freeship" in ln for ln in label_names)
-    has_coin     = any("coin" in ln or "xu" in ln for ln in label_names)
-    has_voucher  = any("voucher" in ln or "giảm" in ln for ln in label_names)
+    badges     = d.get("badges_new", []) or []
+    badge_blob = " ".join(
+        str(b.get("code", "")) + " " + str(b.get("text", ""))
+        for b in badges if isinstance(b, dict)
+    ).lower()
+    has_freeship = "freeship" in badge_blob or bool(d.get("is_free_shipping"))
+    has_coin     = "coin" in badge_blob or "xu" in badge_blob
+    has_voucher  = "voucher" in badge_blob or "coupon" in badge_blob
+
+    # sold_count
+    raw_sold = d.get("quantity_sold")
+    if isinstance(raw_sold, dict):
+        sold = raw_sold.get("value", "")
+    else:
+        sold = raw_sold or ""
+
+    # url
+    url_path = str(d.get("url_path", "")).strip("/")
+    product_url = f"https://tiki.vn/{url_path}" if url_path else f"https://tiki.vn/p{raw_id}.html"
+
+    images = d.get("images", []) or []
+    image_count = len(images) if images else (1 if d.get("thumbnail_url") else 0)
 
     return {
         "product_id":   make_product_id(PLATFORM_ID, raw_id),
@@ -112,33 +129,27 @@ def parse_item(item: dict) -> dict:
         "category_id":  make_category_id(PLATFORM_ID, CATEGORY_ID),
         "shop_id":      make_shop_id(PLATFORM_ID, raw_shop_id),
         "product_name": d.get("name", ""),
-        "product_url":  f"https://shopee.vn/product/{raw_shop_id}/{raw_id}",
-        # Giá
+        "product_url":  product_url,
         "price_current":     price_raw,
         "price_original":    price_orig if price_orig > 0 else "",
         "discount_percent":  discount,
         "price_ends_with_9": price_ends_with_9(price_raw),
         "price_bucket":      get_price_bucket(price_raw),
-        # Hiệu suất
-        "sold_count":    d.get("sold", ""),
-        "stock":         d.get("stock", -1),
-        "rating":        round(d.get("item_rating", {}).get("rating_star", 0), 2),
-        "review_count":  d.get("item_rating", {}).get("rating_count", [0])[0] if isinstance(d.get("item_rating", {}).get("rating_count"), list) else d.get("cmt_count", ""),
-        # Media — điền sau khi vào trang sản phẩm (để trống nếu chưa cào detail)
-        "image_count":                 len(d.get("images", [])),
-        "has_video":                   bool(d.get("video_info_list")),
-        "review_with_image_count":     "",   # cần cào trang detail riêng
+        "sold_count":    sold,
+        "stock":         d.get("inventory", ""),
+        "rating":        round(float(d.get("rating_average") or 0), 2),
+        "review_count":  d.get("review_count", ""),
+        "image_count":                 image_count,
+        "has_video":                   bool(d.get("video_url") or d.get("has_video")),
+        "review_with_image_count":     "",
         "five_star_with_image_count":  "",
-        # Vận chuyển
-        "shipping_fee":           "",   # cần gọi API shipping (tuỳ chọn)
-        "is_freeship":            has_fs_xtra,
+        "shipping_fee":           "",
+        "is_freeship":            has_freeship,
         "estimated_delivery_days":"",
-        # Nhãn KM
-        "has_freeship_xtra_label": has_fs_xtra,
+        "has_freeship_xtra_label": has_freeship,
         "has_coinback_label":      has_coin,
         "has_voucher_label":       has_voucher,
-        "promotion_label_count":   int(has_fs_xtra) + int(has_coin) + int(has_voucher),
-        # Metadata
+        "promotion_label_count":   int(has_freeship) + int(has_coin) + int(has_voucher),
         "crawled_at":  get_timestamp(),
         "crawled_by":  CRAWLED_BY,
     }
