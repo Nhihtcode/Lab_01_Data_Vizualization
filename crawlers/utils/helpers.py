@@ -77,8 +77,30 @@ def make_product_id(platform_id: str, raw_id: str) -> str:
 
 
 def make_shop_id(platform_id: str, raw_id: str) -> str:
-    return f"{platform_id}_{raw_id}"
+    # Chuyển về string và làm sạch
+    id_str = str(raw_id).strip() if raw_id else "unknown"
+    
+    # Nếu không có ID hoặc ID không hợp lệ
+    if id_str.lower() in ["", "none", "nan", "unknown", "0"]:
+        return f"{platform_id}_unknown"
+        
+    prefix = f"{platform_id}_"
+    if id_str.startswith(prefix):
+        return id_str
+    return f"{prefix}{id_str}"
 
 
 def make_category_id(platform_id: str, raw_id: str) -> str:
     return f"{platform_id}_{raw_id}"
+
+def price_ends_with_9(p):
+    if not p or p == 0: 
+        return False
+    
+    # Chuyển thành số nguyên, sau đó thành chuỗi
+    p_str = str(int(p)) 
+    
+    # Loại bỏ tất cả các số 0 ở cuối cùng
+    p_clean = p_str.rstrip('0')
+    
+    return p_clean.endswith('9')
