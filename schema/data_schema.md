@@ -220,7 +220,7 @@
 | **TUẤN 1** | Giá × lượt bán → khoảng giá tối ưu | `fact_product` | `price_current`, `sold_count`, `category_id` |
 | **TUẤN 2** | Rating + review_count → mua | `fact_product` | `rating`, `review_count`, `sold_count` |
 | **Ý 1** | Price Sweet Spot theo danh mục | `fact_product`, `dim_category` | `price_current`, `price_bucket`, `category_name`, `sold_count` |
-| **Ý 2** | Nhãn KM → tỷ lệ chuyển đổi | `fact_product`, `bridge_product_promotion` | `promotion_label`, `sold_count`, `has_freeship_xtra_label`, `has_coinback_label` |
+| **Ý 2** | Ảnh hưởng của giảm giá đến lượt bán | `fact_product` | `discount_percent`, `sold_count`, `category_id` |
 | **THẾ ANH 1** | Uy tín shop → mua | `dim_shop`, `fact_product` | `shop_rating`, `follower_count`, `response_rate`, `sold_count` |
 | **THẾ ANH 2** | Phí ship → hoàn tất đơn | `fact_product` | `shipping_fee`, `is_freeship`, `sold_count` |
 | **DƯƠNG 1** | Giá kết thúc "9" → lượt bán | `fact_product` | `price_current`, `price_ends_with_9`, `sold_count`, `category_id` |
