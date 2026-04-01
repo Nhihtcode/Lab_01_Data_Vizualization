@@ -16,10 +16,6 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# Dữ liệu thô (có thể nặng — upload lên Drive/Kaggle riêng)
-data/raw/
-data/processed/
-
 # OS
 .DS_Store
 Thumbs.db
