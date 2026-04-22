@@ -90,6 +90,21 @@ with tab2:
         )
         st.plotly_chart(fig2, use_container_width=True)
 
+    # === Ý — Danh mục, Phân khúc Giá vs Lượt bán ===
+    st.markdown("---")
+    st.subheader("Ý — Ảnh hưởng của Danh mục & Phân khúc giá đến Lượt bán")
+    if not filtered.empty and "category_id" in filtered.columns and "price_bucket" in filtered.columns and "sold_count" in filtered.columns:
+        promo_df = filtered.dropna(subset=["sold_count"]).groupby(["category_id", "price_bucket"])["sold_count"].mean().reset_index()
+        fig_y = px.bar(
+            promo_df,
+            x="category_id", y="sold_count",
+            color="price_bucket",
+            barmode="group",
+            title="Lượt bán trung bình theo Danh mục hàng hóa & Phân khúc giá",
+            labels={"category_id": "Danh mục sản phẩm", "sold_count": "Lượt bán TB", "price_bucket": "Phân khúc giá"}
+        )
+        st.plotly_chart(fig_y, use_container_width=True)
+
     # === Thêm phần phân tích của các thành viên khác bên dưới ===
     st.markdown("---")
     st.info("💡 Các thành viên: thêm biểu đồ phân tích của mình vào file `dashboard/app.py`")
