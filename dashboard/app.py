@@ -1,4 +1,4 @@
-"""Streamlit dashboard tong hop toan bo EDA cua nhom Lab 01."""
+﻿"""Streamlit dashboard tổng hợp toàn bộ EDA của nhóm Lab 01."""
 
 from pathlib import Path
 
@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 import streamlit as st
 from plotly.subplots import make_subplots
 
@@ -13,6 +14,9 @@ from plotly.subplots import make_subplots
 st.set_page_config(page_title="TMDT Analytics Dashboard", page_icon="cart", layout="wide")
 
 PALETTE = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#17becf"]
+COLORBLIND_PALETTE = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"]
+COLORBLIND_PATTERN_SEQUENCE = ["/", "\\", "x", "-", "+", "."]
+COLORBLIND_CONTINUOUS_SCALE = "Cividis"
 px.defaults.template = "plotly_white"
 px.defaults.color_discrete_sequence = PALETTE
 
@@ -73,14 +77,384 @@ def ensure_price_bucket(df_input: pd.DataFrame) -> None:
     )
 
 
+def apply_theme(theme_mode: str) -> None:
+    st.session_state["theme_mode"] = theme_mode
+    if theme_mode == "Mù màu":
+        px.defaults.template = "plotly_white"
+        pio.templates.default = "plotly_white"
+        px.defaults.color_discrete_sequence = COLORBLIND_PALETTE
+        css = """
+        <style>
+        [data-testid="stAppViewContainer"] { background-color: #f8fafc; color: #111827; }
+        [data-testid="stHeader"] { background: rgba(248, 250, 252, 0.95); }
+        [data-testid="stSidebar"] { background-color: #f1f5f9; }
+        [data-testid="stSidebar"] * { color: #111827 !important; }
+        .stTabs [data-baseweb="tab"] { color: #334155 !important; }
+        .stTabs [aria-selected="true"] {
+            color: #111827 !important;
+            font-weight: 700;
+            border-bottom: 3px solid #0f172a;
+        }
+        h1, h2, h3, h4, h5, h6, p, span, label, div { color: #111827; }
+        div[data-testid="stMetric"] {
+            background-color: #ffffff;
+            border: 2px solid #94a3b8;
+            border-radius: 12px;
+            padding: 8px;
+        }
+        div[data-testid="stDataFrame"] {
+            background-color: #ffffff !important;
+            border: 2px solid #94a3b8;
+            border-radius: 10px;
+        }
+        div[data-testid="stDataFrame"] [role="grid"] {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+        }
+        div[data-testid="stDataFrame"] [role="columnheader"] {
+            background-color: #e2e8f0 !important;
+            color: #111827 !important;
+            font-weight: 700;
+        }
+        div[data-testid="stDataFrame"] [role="gridcell"] {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+        }
+        </style>
+        """
+    elif theme_mode == "Tối":
+        px.defaults.template = "plotly_dark"
+        pio.templates.default = "plotly_dark"
+        px.defaults.color_discrete_sequence = PALETTE
+        css = """
+        <style>
+        [data-testid="stAppViewContainer"] { background-color: #0f172a; color: #e2e8f0; }
+        [data-testid="stHeader"] { background: rgba(15, 23, 42, 0.75); }
+        [data-testid="stSidebar"] { background-color: #111827; }
+        [data-testid="stSidebar"] * { color: #e5e7eb !important; }
+        .stTabs [data-baseweb="tab"] { color: #cbd5e1 !important; }
+        .stTabs [aria-selected="true"] { color: #ffffff !important; }
+        h1, h2, h3, h4, h5, h6, p, span, label, div { color: #e2e8f0; }
+        div[data-testid="stMetric"] {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 8px;
+        }
+        div[data-testid="stDataFrame"] {
+            background-color: #0b1220 !important;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+        }
+        div[data-testid="stDataFrame"] [role="grid"] {
+            background-color: #0b1220 !important;
+            color: #e2e8f0 !important;
+        }
+        div[data-testid="stDataFrame"] [role="columnheader"] {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        div[data-testid="stDataFrame"] [role="gridcell"] {
+            background-color: #0b1220 !important;
+            color: #e2e8f0 !important;
+        }
+        </style>
+        """
+    elif theme_mode == "Sáng":
+        px.defaults.template = "plotly_white"
+        pio.templates.default = "plotly_white"
+        px.defaults.color_discrete_sequence = PALETTE
+        css = """
+        <style>
+        [data-testid="stAppViewContainer"] { background-color: #f8fafc; color: #0f172a; }
+        [data-testid="stHeader"] { background: rgba(248, 250, 252, 0.85); }
+        [data-testid="stSidebar"] { background-color: #eef2ff; }
+        [data-testid="stSidebar"] * { color: #0f172a !important; }
+        .stTabs [data-baseweb="tab"] { color: #334155 !important; }
+        .stTabs [aria-selected="true"] { color: #0f172a !important; }
+        h1, h2, h3, h4, h5, h6, p, span, label, div { color: #0f172a; }
+        div[data-testid="stMetric"] {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 8px;
+        }
+        div[data-testid="stDataFrame"] {
+            background-color: #ffffff !important;
+            border: 1px solid #dbe4f0;
+            border-radius: 10px;
+        }
+        div[data-testid="stDataFrame"] [role="grid"] {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        div[data-testid="stDataFrame"] [role="columnheader"] {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+        div[data-testid="stDataFrame"] [role="gridcell"] {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        </style>
+        """
+    else:
+        px.defaults.template = "plotly_white"
+        pio.templates.default = "plotly_white"
+        px.defaults.color_discrete_sequence = PALETTE
+        css = """
+        <style>
+        @media (prefers-color-scheme: dark) {
+            [data-testid="stAppViewContainer"] { background-color: #0f172a; color: #e2e8f0; }
+            [data-testid="stHeader"] { background: rgba(15, 23, 42, 0.75); }
+            [data-testid="stSidebar"] { background-color: #111827; }
+            [data-testid="stSidebar"] * { color: #e5e7eb !important; }
+            .stTabs [data-baseweb="tab"] { color: #cbd5e1 !important; }
+            .stTabs [aria-selected="true"] { color: #ffffff !important; }
+            div[data-testid="stMetric"] {
+                background-color: #111827;
+                border: 1px solid #1f2937;
+                border-radius: 12px;
+                padding: 8px;
+            }
+            div[data-testid="stDataFrame"] {
+                background-color: #0b1220 !important;
+                border: 1px solid #1f2937;
+                border-radius: 10px;
+            }
+            div[data-testid="stDataFrame"] [role="grid"] {
+                background-color: #0b1220 !important;
+                color: #e2e8f0 !important;
+            }
+            div[data-testid="stDataFrame"] [role="columnheader"] {
+                background-color: #1e293b !important;
+                color: #e2e8f0 !important;
+            }
+            div[data-testid="stDataFrame"] [role="gridcell"] {
+                background-color: #0b1220 !important;
+                color: #e2e8f0 !important;
+            }
+        }
+        @media (prefers-color-scheme: light) {
+            [data-testid="stAppViewContainer"] { background-color: #f8fafc; color: #0f172a; }
+            [data-testid="stHeader"] { background: rgba(248, 250, 252, 0.85); }
+            [data-testid="stSidebar"] { background-color: #eef2ff; }
+            [data-testid="stSidebar"] * { color: #0f172a !important; }
+            .stTabs [data-baseweb="tab"] { color: #334155 !important; }
+            .stTabs [aria-selected="true"] { color: #0f172a !important; }
+            div[data-testid="stMetric"] {
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 8px;
+            }
+            div[data-testid="stDataFrame"] {
+                background-color: #ffffff !important;
+                border: 1px solid #dbe4f0;
+                border-radius: 10px;
+            }
+            div[data-testid="stDataFrame"] [role="grid"] {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+            }
+            div[data-testid="stDataFrame"] [role="columnheader"] {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+            }
+            div[data-testid="stDataFrame"] [role="gridcell"] {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+            }
+        }
+        </style>
+        """
+
+    st.markdown(css, unsafe_allow_html=True)
+
+
+def render_plotly_chart(fig: go.Figure) -> None:
+    mode = st.session_state.get("theme_mode", "Theo hệ thống")
+    is_dark = mode == "Tối"
+    is_colorblind = mode == "Mù màu"
+
+    if is_dark:
+        fig.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="#0f172a",
+            plot_bgcolor="#0f172a",
+            font={"color": "#e2e8f0"},
+        )
+    elif is_colorblind:
+        fig.update_layout(
+            template="plotly_white",
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            font={"color": "#111827"},
+            colorway=COLORBLIND_PALETTE,
+            legend={"bgcolor": "rgba(255,255,255,0.9)", "bordercolor": "#94a3b8", "borderwidth": 1},
+        )
+
+        # Add redundant visual cues for colorblind accessibility.
+        for idx, trace in enumerate(fig.data):
+            if getattr(trace, "type", "") == "bar":
+                trace.marker.pattern = {"shape": COLORBLIND_PATTERN_SEQUENCE[idx % len(COLORBLIND_PATTERN_SEQUENCE)]}
+
+        fig.update_traces(
+            marker_line_width=0.8,
+            marker_line_color="#1f2937",
+            selector={"type": "bar"},
+        )
+        fig.update_traces(
+            marker={"line": {"width": 0.8, "color": "#1f2937"}},
+            selector={"type": "scatter"},
+        )
+        fig.update_traces(colorscale=COLORBLIND_CONTINUOUS_SCALE, selector={"type": "heatmap"})
+        fig.update_traces(colorscale=COLORBLIND_CONTINUOUS_SCALE, selector={"type": "histogram2d"})
+        fig.update_layout(coloraxis={"colorscale": COLORBLIND_CONTINUOUS_SCALE})
+    else:
+        fig.update_layout(
+            template="plotly_white",
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            font={"color": "#0f172a"},
+        )
+
+    st.plotly_chart(fig, use_container_width=True, theme=None)
+
+
+def apply_tab_filters(
+    df_input: pd.DataFrame,
+    key_prefix: str,
+    *,
+    enable_mall: bool = False,
+    enable_video: bool = False,
+    enable_category: bool = False,
+    enable_price_bucket: bool = False,
+    enable_discount: bool = False,
+    enable_rating: bool = False,
+    enable_review: bool = False,
+) -> pd.DataFrame:
+    filtered_tab = df_input.copy()
+    with st.expander("Bộ lọc", expanded=False):
+        if enable_mall and "is_mall" in filtered_tab.columns:
+            mall_option = st.selectbox(
+                "Loại gian hàng",
+                ["Tất cả", "Mall", "Thường"],
+                key=f"{key_prefix}_mall",
+            )
+            if mall_option == "Mall":
+                filtered_tab = filtered_tab[filtered_tab["is_mall"] == True]
+            elif mall_option == "Thường":
+                filtered_tab = filtered_tab[filtered_tab["is_mall"] == False]
+
+        if enable_video and "has_video" in filtered_tab.columns:
+            video_option = st.selectbox(
+                "Trạng thái video",
+                ["Tất cả", "Có video", "Không video"],
+                key=f"{key_prefix}_video",
+            )
+            if video_option == "Có video":
+                filtered_tab = filtered_tab[filtered_tab["has_video"] == True]
+            elif video_option == "Không video":
+                filtered_tab = filtered_tab[filtered_tab["has_video"] == False]
+
+        if enable_category:
+            category_col = get_category_col(filtered_tab)
+            if category_col:
+                category_options = (
+                    filtered_tab[category_col].dropna().astype(str).value_counts().head(30).index.tolist()
+                )
+                selected_categories = st.multiselect(
+                    "Danh mục (tối đa 30 danh mục phổ biến)",
+                    options=category_options,
+                    default=[],
+                    key=f"{key_prefix}_categories",
+                )
+                if selected_categories:
+                    filtered_tab = filtered_tab[filtered_tab[category_col].astype(str).isin(selected_categories)]
+
+        if enable_price_bucket and "price_bucket" in filtered_tab.columns:
+            bucket_options = [
+                b for b in ["<100k", "100k-500k", "500k-1M", "1M-5M", ">5M"] if b in filtered_tab["price_bucket"].astype(str).unique()
+            ]
+            selected_buckets = st.multiselect(
+                "Phân khúc giá",
+                options=bucket_options,
+                default=bucket_options,
+                key=f"{key_prefix}_price_bucket",
+            )
+            if selected_buckets:
+                filtered_tab = filtered_tab[filtered_tab["price_bucket"].astype(str).isin(selected_buckets)]
+
+        if enable_discount and "discount_percent" in filtered_tab.columns:
+            valid_discount = filtered_tab["discount_percent"].dropna()
+            if not valid_discount.empty:
+                min_discount = float(valid_discount.min())
+                max_discount = float(valid_discount.max())
+                selected_discount = st.slider(
+                    "Khoảng giảm giá (%)",
+                    min_value=min_discount,
+                    max_value=max_discount,
+                    value=(min_discount, max_discount),
+                    key=f"{key_prefix}_discount",
+                )
+                filtered_tab = filtered_tab[
+                    (filtered_tab["discount_percent"] >= selected_discount[0])
+                    & (filtered_tab["discount_percent"] <= selected_discount[1])
+                ]
+
+        if enable_rating and "rating" in filtered_tab.columns:
+            valid_rating = filtered_tab["rating"].dropna()
+            if not valid_rating.empty:
+                min_rating = float(valid_rating.min())
+                max_rating = float(valid_rating.max())
+                selected_rating = st.slider(
+                    "Khoảng rating",
+                    min_value=min_rating,
+                    max_value=max_rating,
+                    value=(min_rating, max_rating),
+                    key=f"{key_prefix}_rating",
+                )
+                filtered_tab = filtered_tab[
+                    (filtered_tab["rating"] >= selected_rating[0])
+                    & (filtered_tab["rating"] <= selected_rating[1])
+                ]
+
+        if enable_review and "review_count" in filtered_tab.columns:
+            valid_review = filtered_tab["review_count"].dropna()
+            if not valid_review.empty:
+                min_review = int(valid_review.min())
+                max_review = int(valid_review.max())
+                selected_review = st.slider(
+                    "Khoảng số lượng review",
+                    min_value=min_review,
+                    max_value=max_review,
+                    value=(min_review, max_review),
+                    key=f"{key_prefix}_review_count",
+                )
+                filtered_tab = filtered_tab[
+                    (filtered_tab["review_count"] >= selected_review[0])
+                    & (filtered_tab["review_count"] <= selected_review[1])
+                ]
+
+    st.caption(f"Số dòng sau lọc của trang: {len(filtered_tab):,}")
+    return filtered_tab
+
+
+def render_question_group(title: str, questions: list[str]) -> None:
+    st.markdown(f"### {title}")
+    st.caption("Câu hỏi phân tích:")
+    for idx, question in enumerate(questions, start=1):
+        st.markdown(f"{idx}. {question}")
+
+
 def render_overview(filtered: pd.DataFrame, source_name: str) -> None:
     st.title("Dashboard tối ưu giá và tỷ lệ chuyển đổi")
     if filtered.empty:
         st.warning("Không có dữ liệu phù hợp bộ lọc hiện tại.")
         return
 
-    st.caption(f"Nguồn dữ liệu: {source_name}")
-    st.caption("KPI tổng quan đặt trước, phân tích chi tiết đặt sau theo nguyên tắc visual hierarchy.")
+    st.subheader("Toàn cảnh hiệu suất sản phẩm")
 
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Tổng sản phẩm", f"{len(filtered):,}")
@@ -109,7 +483,7 @@ def render_overview(filtered: pd.DataFrame, source_name: str) -> None:
                 title="Top danh mục theo lượt bán trung bình",
                 labels={category_col: "Danh mục", "sold_count": "Lượt bán TB"},
             )
-            st.plotly_chart(fig_cat, use_container_width=True)
+            render_plotly_chart(fig_cat)
         else:
             st.info("Không đủ cột danh mục và lượt bán để vẽ biểu đồ top danh mục.")
 
@@ -122,13 +496,14 @@ def render_overview(filtered: pd.DataFrame, source_name: str) -> None:
                 title="Phân bố giá sản phẩm",
                 labels={"price_current": "Giá (VND)"},
             )
-            st.plotly_chart(fig_hist, use_container_width=True)
+            render_plotly_chart(fig_hist)
         else:
             st.info("Không đủ cột giá để vẽ histogram.")
 
 
 def render_thinh(filtered: pd.DataFrame) -> None:
-    st.subheader("THINH: Chất lượng trưng bày chi tiết và doanh số Mall")
+    st.subheader("Chất lượng Trưng bày của Sản phẩm Mall")
+
     thinh1_required = [
         "is_mall",
         "image_count",
@@ -139,7 +514,7 @@ def render_thinh(filtered: pd.DataFrame) -> None:
     ]
     miss_1 = missing_columns(filtered, thinh1_required)
     if miss_1:
-        st.warning(f"Thiếu cột cho THINH: {', '.join(miss_1)}")
+        st.warning(f"Thiếu cột cho trang Trưng bày và Giảm giá: {', '.join(miss_1)}")
     else:
         mall_df = filtered[filtered["is_mall"]].copy().dropna(subset=["sold_count"])
         if mall_df.empty:
@@ -175,12 +550,6 @@ def render_thinh(filtered: pd.DataFrame) -> None:
             m2.metric("Lượt bán TB (Mall)", f"{mall_df['sold_count'].mean():,.0f}")
             m3.metric("Ngưỡng top 25%", f">= {q75:,.0f}")
 
-            st.success(
-                "Đề xuất 2 tiêu chuẩn trưng bày: "
-                f"(1) tối thiểu {std_image} ảnh, ưu tiên video (tỷ lệ video top nhóm {std_video_rate:.0%}); "
-                f"(2) tỷ lệ review 5 sao kèm ảnh >= {std_five_star_rate:.0%}."
-            )
-
             c1, c2 = st.columns(2)
             with c1:
                 fig_score = px.scatter(
@@ -191,7 +560,7 @@ def render_thinh(filtered: pd.DataFrame) -> None:
                     title="Điểm trưng bày và lượt bán",
                     labels={"display_quality_score": "Điểm trưng bày", "sold_count": "Lượt bán", "color": "Video"},
                 )
-                st.plotly_chart(fig_score, use_container_width=True)
+                render_plotly_chart(fig_score)
             with c2:
                 mall_df["image_bucket"] = pd.cut(
                     mall_df["image_count"],
@@ -210,14 +579,15 @@ def render_thinh(filtered: pd.DataFrame) -> None:
                     title="Lượt bán TB theo nhóm số ảnh",
                     labels={"image_bucket": "Nhóm số ảnh", "sold_count": "Lượt bán TB"},
                 )
-                st.plotly_chart(fig_bucket, use_container_width=True)
+                render_plotly_chart(fig_bucket)
 
     st.markdown("---")
-    st.subheader("THINH: Hiệu quả giảm giá và ngưỡng discount tối ưu")
+    st.subheader("Hiệu quả Giảm giá theo Dải Discount")
+
     thinh2_required = ["sold_count", "discount_percent"]
     miss_2 = missing_columns(filtered, thinh2_required)
     if miss_2:
-        st.warning(f"Thiếu cột cho THINH: {', '.join(miss_2)}")
+        st.warning(f"Thiếu cột cho trang Trưng bày và Giảm giá: {', '.join(miss_2)}")
         return
 
     promo_df = filtered.dropna(subset=["sold_count", "discount_percent"]).copy()
@@ -242,16 +612,11 @@ def render_thinh(filtered: pd.DataFrame) -> None:
     candidates = band_stats[band_stats["sample_size"] >= min_sample].copy()
     if candidates.empty:
         candidates = band_stats.copy()
-    top2 = candidates.sort_values("avg_sold", ascending=False).head(2)
 
     p1, p2, p3 = st.columns(3)
     p1.metric("Mẫu phân tích", f"{len(promo_df):,}")
     p2.metric("Discount TB (%)", f"{promo_df['discount_percent'].mean():.1f}")
     p3.metric("Lượt bán TB", f"{promo_df['sold_count'].mean():,.0f}")
-
-    if not top2.empty:
-        rec_text = ", ".join(top2["discount_band"].astype(str).tolist())
-        st.success(f"Nhóm discount ưu tiên để thử nghiệm Q3-Q4/2026: {rec_text}.")
 
     g1, g2 = st.columns(2)
     with g1:
@@ -263,7 +628,7 @@ def render_thinh(filtered: pd.DataFrame) -> None:
             title="Lượt bán TB theo nhóm discount",
             labels={"discount_band": "Nhóm discount", "avg_sold": "Lượt bán TB"},
         )
-        st.plotly_chart(fig_band, use_container_width=True)
+        render_plotly_chart(fig_band)
     with g2:
         fig_box = px.box(
             promo_df,
@@ -272,17 +637,42 @@ def render_thinh(filtered: pd.DataFrame) -> None:
             title="Phân bố lượt bán theo nhóm discount",
             labels={"discount_band": "Nhóm discount", "sold_count": "Lượt bán"},
         )
-        st.plotly_chart(fig_box, use_container_width=True)
+        render_plotly_chart(fig_box)
 
     st.dataframe(band_stats.sort_values("avg_sold", ascending=False), use_container_width=True)
 
 
 def render_tuan(filtered: pd.DataFrame) -> None:
-    st.subheader("TUAN: Mối quan hệ giá bán và lượt bán")
+    st.subheader("Độ nhạy Giá và Doanh thu")
+
+    if filtered.empty:
+        st.info("Không có dữ liệu để hiển thị trên trang này.")
+        return
+
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric(
+        "Giá trung vị (VND)",
+        f"{filtered['price_current'].median():,.0f}" if "price_current" in filtered.columns else "N/A",
+    )
+    k2.metric(
+        "Lượt bán trung vị",
+        f"{filtered['sold_count'].median():,.0f}" if "sold_count" in filtered.columns else "N/A",
+    )
+    k3.metric(
+        "Tổng doanh thu ước tính",
+        f"{filtered['revenue_est'].sum():,.0f}" if "revenue_est" in filtered.columns else "N/A",
+    )
+    if "rating" in filtered.columns:
+        rating_series = filtered["rating"].dropna()
+        high_rating_ratio = ((rating_series >= 4.5).mean() * 100) if not rating_series.empty else np.nan
+        k4.metric("Tỷ lệ rating >= 4.5", f"{high_rating_ratio:.1f}%" if pd.notna(high_rating_ratio) else "N/A")
+    else:
+        k4.metric("Tỷ lệ rating >= 4.5", "N/A")
+
     req = ["price_current", "sold_count"]
     miss = missing_columns(filtered, req)
     if miss:
-        st.warning(f"Thiếu cột cho TUAN: {', '.join(miss)}")
+        st.warning(f"Thiếu cột cho trang Giá, Doanh thu và Đánh giá: {', '.join(miss)}")
     else:
         price_df = filtered.dropna(subset=req).copy()
         price_df = price_df[(price_df["price_current"] > 0) & (price_df["sold_count"] > 0)]
@@ -299,7 +689,7 @@ def render_tuan(filtered: pd.DataFrame) -> None:
                 title="Price vs Sold Count (log-log)",
                 labels={"price_current": "Giá (VND)", "sold_count": "Lượt bán"},
             )
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            render_plotly_chart(fig_scatter)
 
         with c2:
             if len(price_df) >= 20:
@@ -325,16 +715,17 @@ def render_tuan(filtered: pd.DataFrame) -> None:
                 fig_mix.update_xaxes(title_text="Price bin")
                 fig_mix.update_yaxes(title_text="Tổng doanh thu", secondary_y=False)
                 fig_mix.update_yaxes(title_text="Lượt bán TB", secondary_y=True)
-                st.plotly_chart(fig_mix, use_container_width=True)
+                render_plotly_chart(fig_mix)
             else:
                 st.info("Không đủ dữ liệu để tạo qcut 10 nhóm giá.")
 
     st.markdown("---")
-    st.subheader("TUAN: Tác động rating và review")
+    st.subheader("Tác động của Rating và Review")
+
     req2 = ["price_current", "rating", "review_count", "sold_count"]
     miss2 = missing_columns(filtered, req2)
     if miss2:
-        st.warning(f"Thiếu cột cho TUAN: {', '.join(miss2)}")
+        st.warning(f"Thiếu cột cho trang Giá, Doanh thu và Đánh giá: {', '.join(miss2)}")
         return
 
     d = filtered.dropna(subset=req2).copy()
@@ -347,7 +738,7 @@ def render_tuan(filtered: pd.DataFrame) -> None:
         color_continuous_scale="RdBu_r",
         aspect="auto",
     )
-    st.plotly_chart(fig_corr, use_container_width=True)
+    render_plotly_chart(fig_corr)
 
     c3, c4 = st.columns(2)
     with c3:
@@ -361,7 +752,7 @@ def render_tuan(filtered: pd.DataFrame) -> None:
             labels={"rating_group": "Rating group", "sold_count": "Lượt bán"},
         )
         fig_box.update_yaxes(type="log")
-        st.plotly_chart(fig_box, use_container_width=True)
+        render_plotly_chart(fig_box)
 
     with c4:
         bins_review = [0, 10, 50, 200, 1000, np.inf]
@@ -386,20 +777,49 @@ def render_tuan(filtered: pd.DataFrame) -> None:
                 title="Ma trận hiệu quả Rating x Review",
                 color_continuous_scale="YlGnBu",
             )
-            st.plotly_chart(fig_heat, use_container_width=True)
+            render_plotly_chart(fig_heat)
         else:
             st.info("Không đủ dữ liệu để tạo ma trận Rating x Review.")
 
 
 def render_y(filtered: pd.DataFrame) -> None:
-    st.subheader("Y: Danh mục và phân khúc giá đến lượt bán")
+    st.subheader("Danh mục và Phân khúc Giá")
+
+    if filtered.empty:
+        st.info("Không có dữ liệu để hiển thị trên trang này.")
+        return
+
     category_col = get_category_col(filtered)
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric(
+        "Số danh mục",
+        f"{filtered[category_col].nunique():,}" if category_col is not None else "N/A",
+    )
+    k2.metric(
+        "Số phân khúc giá",
+        f"{filtered['price_bucket'].astype(str).nunique():,}" if "price_bucket" in filtered.columns else "N/A",
+    )
+    if "discount_percent" in filtered.columns:
+        discount_ratio = (filtered["discount_percent"].fillna(0) > 0).mean() * 100
+        k3.metric("Tỷ lệ sản phẩm có giảm giá", f"{discount_ratio:.1f}%")
+    else:
+        k3.metric("Tỷ lệ sản phẩm có giảm giá", "N/A")
+
+    lift_text = "N/A"
+    if {"discount_percent", "sold_count"}.issubset(filtered.columns):
+        lift_df = filtered.dropna(subset=["discount_percent", "sold_count"]).copy()
+        sold_discount = lift_df[lift_df["discount_percent"] > 0]["sold_count"].mean()
+        sold_non_discount = lift_df[lift_df["discount_percent"] == 0]["sold_count"].mean()
+        if pd.notna(sold_discount) and pd.notna(sold_non_discount) and sold_non_discount != 0:
+            lift_text = f"{((sold_discount - sold_non_discount) / sold_non_discount) * 100:+.1f}%"
+    k4.metric("Lift bán hàng do giảm giá", lift_text)
+
     req = ["sold_count", "price_bucket"]
     miss = missing_columns(filtered, req)
     if category_col is None:
         miss.append("category_name/category_id")
     if miss:
-        st.warning(f"Thiếu cột cho Y: {', '.join(miss)}")
+        st.warning(f"Thiếu cột cho trang Danh mục và Khuyến mãi: {', '.join(miss)}")
     else:
         ydf = filtered.dropna(subset=[category_col, "price_bucket", "sold_count"]).copy()
         top_cats = ydf[category_col].astype(str).value_counts().head(12).index.tolist()
@@ -422,17 +842,17 @@ def render_y(filtered: pd.DataFrame) -> None:
                 labels={category_col: "Danh mục", "sold_count": "Lượt bán TB", "price_bucket": "Phân khúc giá"},
             )
             fig_bar.update_layout(xaxis_tickangle=-40)
-            st.plotly_chart(fig_bar, use_container_width=True)
+            render_plotly_chart(fig_bar)
         with c2:
             heat = agg.pivot(index=category_col, columns="price_bucket", values="sold_count")
             fig_heat = px.imshow(
                 heat,
                 text_auto=".0f",
                 aspect="auto",
-                title="Heatmap lượt bán TB theo danh mục x phân khúc giá",
+                title="Heatmap lượt bán TB theo danh mục và phân khúc giá",
                 color_continuous_scale="Blues",
             )
-            st.plotly_chart(fig_heat, use_container_width=True)
+            render_plotly_chart(fig_heat)
 
         stats = (
             ydf.groupby([category_col, "price_bucket"], observed=False)
@@ -444,9 +864,10 @@ def render_y(filtered: pd.DataFrame) -> None:
         st.dataframe(top3, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("Y: Ảnh hưởng giảm giá đến lượt bán")
+    st.subheader("Tác động Giảm giá theo Danh mục")
+
     if "discount_percent" not in filtered.columns or "sold_count" not in filtered.columns:
-        st.warning("Thiếu cột discount_percent hoặc sold_count cho Y.")
+        st.warning("Thiếu cột discount_percent hoặc sold_count cho trang Danh mục và Khuyến mãi.")
         return
 
     y2 = filtered.dropna(subset=["sold_count", "discount_percent"]).copy()
@@ -464,7 +885,7 @@ def render_y(filtered: pd.DataFrame) -> None:
             labels={"Trang_Thai_Giam_Gia": "Trạng thái", "sold_count": "Lượt bán TB"},
             text_auto=".1f",
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        render_plotly_chart(fig_bar)
     with d2:
         discount_sum = y2.groupby("Trang_Thai_Giam_Gia", as_index=False)["sold_count"].sum()
         fig_pie = px.pie(
@@ -474,7 +895,7 @@ def render_y(filtered: pd.DataFrame) -> None:
             hole=0.4,
             title="Tỷ trọng tổng lượt bán theo trạng thái giảm giá",
         )
-        st.plotly_chart(fig_pie, use_container_width=True)
+        render_plotly_chart(fig_pie)
 
     category_col = get_category_col(y2)
     if category_col:
@@ -496,15 +917,41 @@ def render_y(filtered: pd.DataFrame) -> None:
             text_auto=".0f",
         )
         fig_cat.update_layout(xaxis_tickangle=-40)
-        st.plotly_chart(fig_cat, use_container_width=True)
+        render_plotly_chart(fig_cat)
 
 
 def render_the_anh(filtered: pd.DataFrame) -> None:
-    st.subheader("THE ANH: Tổng hợp biểu đồ trong EDA")
+    st.subheader("Phân khúc Thị trường theo Giá và Rating")
+
+    if filtered.empty:
+        st.info("Không có dữ liệu để hiển thị trên trang này.")
+        return
+
+    k1, k2, k3, k4 = st.columns(4)
+    if "price_bucket" in filtered.columns:
+        bucket_series = filtered["price_bucket"].astype(str)
+        k1.metric("Số phân khúc giá", f"{bucket_series.nunique():,}")
+        top_bucket_count = bucket_series.value_counts()
+        k2.metric("Phân khúc phổ biến nhất", top_bucket_count.index[0] if not top_bucket_count.empty else "N/A")
+    else:
+        k1.metric("Số phân khúc giá", "N/A")
+        k2.metric("Phân khúc phổ biến nhất", "N/A")
+
+    if {"price_bucket", "revenue_est"}.issubset(filtered.columns):
+        rev_by_bucket = filtered.dropna(subset=["price_bucket", "revenue_est"]).groupby("price_bucket")["revenue_est"].sum()
+        k3.metric("Phân khúc doanh thu cao nhất", str(rev_by_bucket.idxmax()) if not rev_by_bucket.empty else "N/A")
+    else:
+        k3.metric("Phân khúc doanh thu cao nhất", "N/A")
+
+    k4.metric(
+        "Rating trung bình",
+        f"{filtered['rating'].mean():.2f}" if "rating" in filtered.columns else "N/A",
+    )
+
     req = ["price_bucket", "price_current", "sold_count", "rating"]
     miss = missing_columns(filtered, req)
     if miss:
-        st.warning(f"Thiếu cột cho THE ANH: {', '.join(miss)}")
+        st.warning(f"Thiếu cột cho trang Phân khúc theo Giá: {', '.join(miss)}")
         return
 
     d = filtered.dropna(subset=req).copy()
@@ -521,7 +968,7 @@ def render_the_anh(filtered: pd.DataFrame) -> None:
             title="Phân bố số lượng sản phẩm theo phân khúc giá",
             labels={"price_bucket": "Phân khúc giá", "so_luong_sp": "Số lượng"},
         )
-        st.plotly_chart(fig_count, use_container_width=True)
+        render_plotly_chart(fig_count)
 
     with c2:
         fig_box = px.box(
@@ -532,7 +979,7 @@ def render_the_anh(filtered: pd.DataFrame) -> None:
             labels={"price_bucket": "Phân khúc giá", "sold_count": "Lượt bán"},
         )
         fig_box.update_yaxes(type="log")
-        st.plotly_chart(fig_box, use_container_width=True)
+        render_plotly_chart(fig_box)
 
     seg = (
         d.groupby("price_bucket", observed=False)
@@ -549,7 +996,7 @@ def render_the_anh(filtered: pd.DataFrame) -> None:
     fig_mix.update_xaxes(title_text="Price bucket")
     fig_mix.update_yaxes(title_text="Revenue", secondary_y=False)
     fig_mix.update_yaxes(title_text="Sold mean", secondary_y=True)
-    st.plotly_chart(fig_mix, use_container_width=True)
+    render_plotly_chart(fig_mix)
 
     e1, e2 = st.columns(2)
     with e1:
@@ -568,7 +1015,7 @@ def render_the_anh(filtered: pd.DataFrame) -> None:
             color_continuous_scale="YlGnBu",
             title="Sold theo price segment và rating",
         )
-        st.plotly_chart(fig_heat, use_container_width=True)
+        render_plotly_chart(fig_heat)
     with e2:
         fig_scatter = px.scatter(
             d,
@@ -580,15 +1027,46 @@ def render_the_anh(filtered: pd.DataFrame) -> None:
             title="Giá vs Sold theo phân khúc",
             labels={"price_current": "Giá", "sold_count": "Sold"},
         )
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        render_plotly_chart(fig_scatter)
 
 
 def render_duong(filtered: pd.DataFrame) -> None:
-    st.subheader("DUONG: Hiệu ứng giá tâm lý")
+    st.subheader("Hiệu ứng Giá Tâm lý")
+
+    if filtered.empty:
+        st.info("Không có dữ liệu để hiển thị trên trang này.")
+        return
+
+    psy_avg_text = "N/A"
+    regular_avg_text = "N/A"
+    delta_text = "N/A"
+    if {"price_current", "sold_count"}.issubset(filtered.columns):
+        d_kpi = filtered.dropna(subset=["price_current", "sold_count"]).copy()
+        d_kpi = d_kpi[d_kpi["price_current"] > 0]
+        if not d_kpi.empty:
+            d_kpi["is_psy_price"] = d_kpi["price_current"].astype(int).astype(str).str[-3:].str.contains("9")
+            psy_mean = d_kpi[d_kpi["is_psy_price"]]["sold_count"].mean()
+            regular_mean = d_kpi[~d_kpi["is_psy_price"]]["sold_count"].mean()
+            psy_avg_text = f"{psy_mean:,.1f}" if pd.notna(psy_mean) else "N/A"
+            regular_avg_text = f"{regular_mean:,.1f}" if pd.notna(regular_mean) else "N/A"
+            if pd.notna(psy_mean) and pd.notna(regular_mean) and regular_mean != 0:
+                delta_text = f"{((psy_mean - regular_mean) / regular_mean) * 100:+.1f}%"
+
+    trust_text = "N/A"
+    if {"rating", "review_count"}.issubset(filtered.columns):
+        trust_series = (filtered["rating"] * 0.7) + (np.log1p(filtered["review_count"]) * 0.3)
+        trust_text = f"{trust_series.mean():.2f}" if not trust_series.dropna().empty else "N/A"
+
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Lượt bán TB giá tâm lý", psy_avg_text)
+    k2.metric("Lượt bán TB giá thường", regular_avg_text)
+    k3.metric("Chênh lệch hiệu quả", delta_text)
+    k4.metric("Trust index trung bình", trust_text)
+
     req = ["price_current", "sold_count"]
     miss = missing_columns(filtered, req)
     if miss:
-        st.warning(f"Thiếu cột cho DUONG: {', '.join(miss)}")
+        st.warning(f"Thiếu cột cho trang Giá tâm lý và Uy tín shop: {', '.join(miss)}")
     else:
         d = filtered.dropna(subset=req).copy()
         d = d[d["price_current"] > 0]
@@ -613,14 +1091,15 @@ def render_duong(filtered: pd.DataFrame) -> None:
             labels={"label": "Nhóm giá", "sold_count": "Lượt bán TB"},
         )
         fig.update_layout(showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        render_plotly_chart(fig)
 
     st.markdown("---")
-    st.subheader("DUONG: Trust index và hiệu quả bán hàng")
+    st.subheader("Trust Index và Uy tín Shop")
+
     req2 = ["rating", "review_count", "sold_count"]
     miss2 = missing_columns(filtered, req2)
     if miss2:
-        st.warning(f"Thiếu cột cho DUONG: {', '.join(miss2)}")
+        st.warning(f"Thiếu cột cho trang Giá tâm lý và Uy tín shop: {', '.join(miss2)}")
         return
 
     d2 = filtered.dropna(subset=req2).copy()
@@ -641,7 +1120,7 @@ def render_duong(filtered: pd.DataFrame) -> None:
         title="Tương quan trust index và lượt bán",
         labels={"trust_index_score": "Trust Index", "sold_count": "Lượt bán"},
     )
-    st.plotly_chart(fig2, use_container_width=True)
+    render_plotly_chart(fig2)
 
 
 df, source_name = load_data()
@@ -694,85 +1173,82 @@ if not df.empty:
         df["revenue_est"] = df["price_current"] * df["sold_count"]
 
 
-st.sidebar.header("Bộ lọc")
+st.sidebar.header("Giao diện")
+theme_mode = st.sidebar.radio(
+    "Chế độ hiển thị",
+    options=["Theo hệ thống", "Sáng", "Tối", "Mù màu"],
+    index=0,
+)
+apply_theme(theme_mode)
+
 filtered = df.copy()
-
-if not df.empty:
-    if "platform_id" in df.columns:
-        options = ["Tat ca"] + sorted(df["platform_id"].dropna().astype(str).unique().tolist())
-        selected_platform = st.sidebar.selectbox("Sàn TMDT", options)
-        if selected_platform != "Tat ca":
-            filtered = filtered[filtered["platform_id"].astype(str) == selected_platform]
-
-    if "crawled_by" in df.columns:
-        crawlers = ["Tat ca"] + sorted(df["crawled_by"].dropna().astype(str).unique().tolist())
-        selected_owner = st.sidebar.selectbox("Nguồn crawl", crawlers)
-        if selected_owner != "Tat ca":
-            filtered = filtered[filtered["crawled_by"].astype(str) == selected_owner]
-
-    if "price_current" in filtered.columns:
-        valid_prices = filtered["price_current"].dropna()
-        if not valid_prices.empty:
-            min_price = float(valid_prices.min())
-            max_price = float(valid_prices.max())
-            selected_range = st.sidebar.slider(
-                "Khoảng giá (VND)",
-                min_value=min_price,
-                max_value=max_price,
-                value=(min_price, max_price),
-            )
-            filtered = filtered[
-                (filtered["price_current"] >= selected_range[0])
-                & (filtered["price_current"] <= selected_range[1])
-            ]
 
 
 tabs = st.tabs(
     [
-        "Tong quan",
-        "THINH",
-        "TUAN",
-        "Y",
-        "THE ANH",
-        "DUONG",
-        "Tong ket",
+        "Tổng quan",
+        "Trưng bày & Giảm giá",
+        "Giá, Doanh thu & Đánh giá",
+        "Danh mục & Khuyến mãi",
+        "Phân khúc theo Giá",
+        "Giá tâm lý & Uy tín shop",
     ]
 )
 
 with tabs[0]:
-    render_overview(filtered, source_name)
+    filtered_overview = apply_tab_filters(
+        filtered,
+        "tab_overview",
+        enable_category=True,
+        enable_price_bucket=True,
+    )
+    render_overview(filtered_overview, source_name)
 
 with tabs[1]:
-    render_thinh(filtered)
+    filtered_display = apply_tab_filters(
+        filtered,
+        "tab_display",
+        enable_mall=True,
+        enable_video=True,
+        enable_discount=True,
+    )
+    render_thinh(filtered_display)
 
 with tabs[2]:
-    render_tuan(filtered)
+    filtered_price_rating = apply_tab_filters(
+        filtered,
+        "tab_price_rating",
+        enable_price_bucket=True,
+        enable_rating=True,
+        enable_review=True,
+    )
+    render_tuan(filtered_price_rating)
 
 with tabs[3]:
-    render_y(filtered)
+    filtered_category = apply_tab_filters(
+        filtered,
+        "tab_category",
+        enable_category=True,
+        enable_price_bucket=True,
+        enable_discount=True,
+    )
+    render_y(filtered_category)
 
 with tabs[4]:
-    render_the_anh(filtered)
+    filtered_segment = apply_tab_filters(
+        filtered,
+        "tab_segment",
+        enable_price_bucket=True,
+        enable_rating=True,
+    )
+    render_the_anh(filtered_segment)
 
 with tabs[5]:
-    render_duong(filtered)
-
-with tabs[6]:
-    st.title("Tổng kết và nguyên tắc trực quan hoá")
-    if not filtered.empty and "crawled_by" in filtered.columns:
-        contrib = filtered["crawled_by"].astype(str).value_counts().reset_index()
-        contrib.columns = ["Thành viên", "Số dòng"]
-        fig_contrib = px.pie(
-            contrib,
-            names="Thành viên",
-            values="Số dòng",
-            title="Tỷ lệ đóng góp dữ liệu theo thành viên",
-            hole=0.35,
-        )
-        st.plotly_chart(fig_contrib, use_container_width=True)
-
-    st.subheader("Checklist visual đã áp dụng")
-    st.markdown("1. KPI tổng quan đặt trước, chart chi tiết đặt sau.")
-    st.markdown("2. Đơn vị đo lường và tiêu đề được viết rõ ràng cho từng biểu đồ.")
-    st.markdown("3. Màu sắc nhất quán, không dùng 3D chart, ưu tiên bar-scatter-box-heatmap.")
-    st.markdown("4. So sánh theo nhóm có sắp xếp và giảm noise bằng lọc/phân khúc.")
+    filtered_psy = apply_tab_filters(
+        filtered,
+        "tab_psy",
+        enable_mall=True,
+        enable_rating=True,
+        enable_review=True,
+    )
+    render_duong(filtered_psy)
