@@ -182,7 +182,6 @@ def main():
             while True:
                 items = fetch_listing(session, cat_id, current_page, cat_name)
                 
-                # Điều kiện dừng: Nếu không còn sản phẩm ở trang hiện tại
                 if not items:
                     print(f"   [!] Đã hết sản phẩm tại trang {current_page}. Chuyển sang xử lý chi tiết.")
                     break
@@ -191,7 +190,6 @@ def main():
                 print(f"   [+] Đã lấy danh sách trang {current_page:03d} (Tổng: {len(basic_items)} SP)")
                 
                 current_page += 1
-                # Nghỉ ngắn giữa các trang listing để tránh bị block
                 time.sleep(random.uniform(0.3, 0.6))
 
             # VÒNG 2: DETAIL + REVIEWS (Chạy đa luồng) 

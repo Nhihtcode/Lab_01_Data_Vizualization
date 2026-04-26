@@ -27,10 +27,10 @@ from utils.helpers import (
 )
 
 # ════════════════════════════════════════════════════════════════════════════
-# CẤU HÌNH — mỗi thành viên chỉnh tại đây
+# CẤU HÌNH 
 # ════════════════════════════════════════════════════════════════════════════
 PLATFORM_ID   = "tiki"
-CRAWLED_BY    = "y"            # ← đổi thành tên của bạn: thinh/tuan/y/the_anh/duong
+CRAWLED_BY    = "y"           
 CATEGORY_ID   = "931"            # ← ID danh mục trên Tiki (lấy từ URL category)
 CATEGORY_NAME = "Thời Trang Nữ"         # ← Tên danh mục
 MAX_PAGES     = 30                # 30 trang ~ 1200 sản phẩm (đủ để lấy 1000 dòng)
@@ -143,7 +143,6 @@ def fetch_shop_id_from_detail(detail: dict | None) -> str | None:
     if not detail:
         return None
 
-    # Tuỳ phiên bản API, seller có thể nằm ở current_seller hoặc seller
     current_seller = detail.get("current_seller")
     if isinstance(current_seller, dict) and current_seller.get("id"):
         return str(current_seller.get("id"))
@@ -279,7 +278,7 @@ def parse_item(item: dict) -> dict:
         "stock":         stock_value,
         "rating":        rating,
         "review_count":  d.get("review_count", ""),
-        # Media — điền sau khi vào trang sản phẩm (để trống nếu chưa cào detail)
+        # Media — điền sau khi vào trang sản phẩm 
         "image_count":                 image_count,
         "has_video":                   bool(d.get("video_url")) or bool(d.get("has_video")),
         "review_with_image_count":     review_with_image_count,

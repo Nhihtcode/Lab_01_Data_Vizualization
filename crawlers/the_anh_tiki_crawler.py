@@ -24,10 +24,10 @@ from utils.helpers import (
 )
 
 # ════════════════════════════════════════════════════════════════════════════
-# CẤU HÌNH — mỗi thành viên chỉnh tại đây
+# CẤU HÌNH 
 # ════════════════════════════════════════════════════════════════════════════
 PLATFORM_ID   = "tiki"
-CRAWLED_BY    = "the_anh"       # ← đổi tên: thinh/tuan/y/the_anh/duong
+CRAWLED_BY    = "the_anh"       
 CATEGORY_ID   = "1520"          # ← ID danh mục Tiki (lấy từ URL)
 CATEGORY_NAME = "Làm Đẹp & Sức Khỏe"    # ← Tên danh mục
 MAX_PAGES     = 10              # mỗi trang 40 sản phẩm → tối đa 400

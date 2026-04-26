@@ -119,7 +119,6 @@ def fetch_product_reviews(product_id: str) -> dict:
 # ═══════════════════════════════════════════════════════════════════════
 
 def parse_fact_product(basic: dict, detail: dict, reviews: dict) -> dict:
-    # Lấy data detail ưu tiên hơn, nếu ko có thì fallback basic
     d = detail if detail else basic
     raw_id = str(d.get("id", basic.get("id", "")))
     
@@ -243,13 +242,10 @@ def parse_dim_shop(basic: dict, detail: dict) -> dict:
     store_id = seller.get("store_id")
     shop_url = getattr(seller, "get", lambda k: "")("link", f"https://tiki.vn/cua-hang/{store_id if store_id else raw_shop_id}")
     
-    # Location
     location = d.get("inventory_status", "")
     if location == "available" or location == "in_stock":
-        location = "" # tiki không thường expose city như shopee trong model này
+        location = "" 
 
-    # V2 products seller thường có thêm chỉ số (nếu có trên web)
-    # Tuy nhiên nếu không có ta mặc định rỗng
     rating_star = ""
     follower = ""
     if "store_info" in seller:
