@@ -235,26 +235,14 @@ with h_right:
         c = {"void": "#0B0F19", "surf": "#141B2D", "t1": "#FFFFFF", "t2": "#F8FAFC", "t3": "#CBD5E1", "acc": "#FF5F1F", "rail": "rgba(255,255,255,0.15)"}
 
     elif theme_choice == "Mù màu":
-        # ─────────────────────────────────────────────────────────────────────
-        # COLORBLIND (CVD) THEME — theo The Big Book of Dashboards (Ch.1 & Ch.33)
-        #
-        # Nguyên tắc áp dụng:
-        #  1. Nền trắng thuần (#FFFFFF) + chữ đen tuyệt đối (#000000) →
-        #     contrast tối đa (sáng vs tối) để người CVD phân biệt qua độ sáng.
-        #  2. Accent dùng #0072B2 (blue đậm) — blue là màu an toàn nhất với mọi
-        #     dạng CVD (protanopia, deuteranopia, tritanopia).
-        #  3. Border/rail đậm hơn (#B0B8C1) thay vì transparent, giúp phân tách
-        #     vùng không phụ thuộc màu sắc.
-        #  4. Text t2/t3 giữ contrast cao (#1A2634 / #4A5568) tránh xám nhạt.
-        # ─────────────────────────────────────────────────────────────────────
         c = {
-            "void": "#FFFFFF",      # Nền trắng tinh: tối đa contrast sáng/tối
-            "surf": "#F0F4F8",      # Surface xám nhạt lạnh: phân tách vùng không cần màu
-            "t1":   "#000000",      # Chữ chính đen tuyệt đối: đọc được với mọi dạng CVD
-            "t2":   "#1A2634",      # Chữ phụ xanh đen: contrast cao, không lẫn với acc
-            "t3":   "#4A5568",      # Chữ mờ xám trung tính: không dùng nâu/đỏ/xanh lá
-            "acc":  "#0072B2",      # Accent BLUE: màu CVD-safe số 1 theo sách (Ch.1, Ch.33)
-            "rail": "#B0B8C1",      # Đường kẻ đậm hơn: dùng độ sáng thay màu sắc
+            "void": "#FFFFFF",    
+            "surf": "#F0F4F8",     
+            "t1":   "#000000",     
+            "t2":   "#1A2634",     
+            "t3":   "#4A5568",  
+            "acc":  "#0072B2",  
+            "rail": "#B0B8C1",      
         }
 
     else: 
@@ -276,29 +264,14 @@ st.markdown('<div style="border-bottom: 1px solid var(--rail); margin: 15px 0 25
 #  5. PLOTLY ENGINE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if theme_choice == "Mù màu":
-    # ─────────────────────────────────────────────────────────────────────────
-    # COLORBLIND PALETTE — theo The Big Book of Dashboards (Ch.1 & Ch.33)
-    #
-    # Palette gốc từ sách (Wong 2011, được Tableau/Stone khuyên dùng):
-    #   Blue #0072B2, Orange #E69F00, Sky Blue #56B4E9, Vermillion #D55E00,
-    #   Bluish Green #009E73 → thay thành #44AA99 (thêm blue vào green → Ch.33),
-    #   Yellow #F0E442, Black #000000
-    #
-    # Đã LOẠI BỎ so với code cũ:
-    #   ✗ #CC79A7 (pink/magenta) → người deuteranopia dễ nhầm với blue/tím
-    #   ✗ #009E73 (pure green)   → người protanopia thấy như nâu, nhầm với đỏ
-    #
-    # Thứ tự ưu tiên: Blue → Orange → Sky Blue → Vermillion → Bluish Green
-    # (sáng → tối xen kẽ để contrast theo light/dark như sách khuyên Ch.33)
-    # ─────────────────────────────────────────────────────────────────────────
     C = [
-        "#0072B2",  # 1. Blue đậm       — CVD-safe anchor, sách khuyên làm màu chủ đạo
-        "#E69F00",  # 2. Orange         — "blue/orange is CVD-friendly" (Ch.1, Ch.21, Ch.33)
-        "#56B4E9",  # 3. Sky Blue nhạt  — contrast với Blue đậm, phân tách bằng độ sáng
-        "#D55E00",  # 4. Vermillion     — đỏ-cam đậm, safe hơn pure red, không nhầm với green
-        "#44AA99",  # 5. Bluish Green   — "leverage blue in the green color" (Ch.33), không phải pure green
-        "#F0E442",  # 6. Yellow         — contrast cao trên nền trắng/tối
-        "#000000",  # 7. Black          — đảm bảo phân biệt khi màu hội tụ
+        "#0072B2",  
+        "#E69F00",  
+        "#56B4E9",  
+        "#D55E00",  
+        "#44AA99", 
+        "#F0E442",  
+        "#000000",  
     ]
 elif theme_choice == "Tối":
     C = ["#60A5FA", "#F97316", "#34D399", "#F472B6", "#FACC15"]
@@ -341,34 +314,19 @@ def accessible_plotly_chart(fig, **kwargs):
             legend=dict(bgcolor="rgba(0,0,0,0)", bordercolor=c["rail"], borderwidth=1),
         )
     elif current_theme == "Mù màu":
-        # ─────────────────────────────────────────────────────────────────────
-        # CVD CHART RENDERING — theo Big Book of Dashboards (Ch.1, Ch.33)
-        #
-        # Các kỹ thuật áp dụng:
-        #  • template="plotly_white": nền trắng → contrast tối đa (light vs dark)
-        #  • colorway=C: dùng palette CVD-safe đã định nghĩa ở trên
-        #  • colorscale="Cividis": thang màu perceptually-uniform, CVD-safe, 
-        #    đi từ xanh dương nhạt → vàng (tránh red-green gradient)
-        #  • Patterns trên bar/histogram: thêm texture (/, \, x, -, |, +, .)
-        #    → "offer alternate methods of distinguishing data" (Ch.33)
-        #    → người CVD phân biệt series bằng hình dạng, không chỉ màu sắc
-        #  • line.width=2.0: đường kẻ đậm hơn để dễ theo dõi
-        #  • marker.size=8 & line trên scatter: dễ thấy điểm dữ liệu hơn
-        # ─────────────────────────────────────────────────────────────────────
         fig.update_layout(
             template="plotly_white",
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#000000"),     # Chữ đen tuyệt đối
+            font=dict(color="#000000"),    
             colorway=C,
-            coloraxis=dict(colorscale="Cividis"),   # Thang màu CVD-safe (không red-green)
+            coloraxis=dict(colorscale="Cividis"),   
             legend=dict(
-                bgcolor="rgba(255,255,255,0.95)",   # Nền legend trắng đục để dễ đọc
+                bgcolor="rgba(255,255,255,0.95)",   
                 bordercolor="#B0B8C1",
                 borderwidth=1.5,
             ),
         )
-        # Pattern shapes xen kẽ để phân biệt series không dựa vào màu
         patterns = ["/", "\\", "x", "-", "|", "+", "."]
         for i, trace in enumerate(fig.data):
             color = C[i % len(C)]
@@ -378,29 +336,28 @@ def accessible_plotly_chart(fig, **kwargs):
                     pattern=dict(
                         shape=patterns[i % len(patterns)],
                         fillmode="overlay",
-                        fgcolor="rgba(0,0,0,0.55)",  # Pattern đậm hơn để rõ trên nền trắng
+                        fgcolor="rgba(0,0,0,0.55)",  
                         size=6,
                     ),
-                    line=dict(width=1.5, color="#000000")  # Viền đen rõ từng cột
+                    line=dict(width=1.5, color="#000000")  
                 ))
             if getattr(trace, "type", "") in ["heatmap", "histogram2d"]:
-                # Dùng Cividis: blue→yellow, không có red-green transition
                 trace.update(colorscale="Cividis")
             if getattr(trace, "type", "") == "scatter":
                 trace.update(
                     marker=dict(
                         color=color,
-                        size=8,                             # Điểm to hơn dễ thấy
+                        size=8,                             
                         symbol=["circle", "square", "diamond", "cross", "x",
-                                "triangle-up", "triangle-down"][i % 7],  # Shape khác nhau
+                                "triangle-up", "triangle-down"][i % 7], 
                         line=dict(width=1.5, color="#000000")
                     ),
-                    line=dict(color=color, width=2.0)       # Đường dày hơn
+                    line=dict(color=color, width=2.0)       
                 )
             if getattr(trace, "type", "") == "box":
                 trace.update(
                     marker=dict(color=color, size=5),
-                    line=dict(color="#000000", width=1.5),  # Viền đen rõ
+                    line=dict(color="#000000", width=1.5),  
                     fillcolor=color
                 )
             if getattr(trace, "type", "") == "pie":
@@ -409,9 +366,9 @@ def accessible_plotly_chart(fig, **kwargs):
                     trace.update(
                         marker=dict(
                             colors=[C[j % len(C)] for j in range(value_len)],
-                            line=dict(color="#000000", width=2),  # Viền đen giữa lát cắt
+                            line=dict(color="#000000", width=2),  
                         ),
-                        textinfo="label+percent",  # Luôn hiện nhãn + % không phụ thuộc màu
+                        textinfo="label+percent",  
                     )
     else:
         fig.update_layout(
@@ -507,8 +464,6 @@ with T2:
             c1, c2 = st.columns(2)
             with c1:
                 with st.container(border=True):
-                    # CVD-NOTE: Dùng Blue (#0072B2) vs Orange (#E69F00) — combo CVD-safe nhất (Ch.1, Ch.33)
-                    # Thay vì Blue vs Orange-red (#FF5F1F) cũ → Vermillion (#D55E00) an toàn hơn
                     fig_score = px.scatter(mall_df, x="display_quality_score", y="sold_count",
                                            color=mall_df["has_video_num"].map({1: "Có video", 0: "Không video"}),
                                            color_discrete_sequence=[C[0], C[1]],   # Blue, Orange
@@ -520,7 +475,6 @@ with T2:
                 with st.container(border=True):
                     mall_df["image_bucket"] = pd.cut(mall_df["image_count"], bins=[-1, 3, 6, 9, 99], labels=["0-3", "4-6", "7-9", "10+"])
                     sold_by_bucket = mall_df.groupby("image_bucket", observed=False, as_index=False)["sold_count"].mean()
-                    # CVD-NOTE: Dùng Sky Blue (#56B4E9) thay vì Teal (#2DDBB4) — Blue family CVD-safe
                     fig_bucket = px.bar(sold_by_bucket, x="image_bucket", y="sold_count",
                                         color_discrete_sequence=[C[2]],   # Sky Blue
                                         labels={"image_bucket": "Nhóm số ảnh", "sold_count": "Lượt bán TB"})
@@ -548,21 +502,18 @@ with T2:
             g1, g2 = st.columns(2)
             with g1:
                 with st.container(border=True):
-                    # CVD-NOTE: color_continuous_scale="Blues" → thay bằng "Cividis"
-                    # Blues dùng blue→white có thể mất contrast; Cividis perceptually-uniform & CVD-safe
                     fig_band = px.bar(band_stats.sort_values("avg_sold", ascending=False),
                                       x="discount_band", y="avg_sold",
                                       color="sample_size",
-                                      color_continuous_scale="Cividis",    # CVD-safe thay Blues
+                                      color_continuous_scale="Cividis",   
                                       labels={"discount_band": "Dải discount", "avg_sold": "Lượt bán TB", "sample_size": "Mẫu"})
                     fig_band.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Lượt bán TB theo dải discount</b>", font=dict(size=14)))
                     st.plotly_chart(fig_band, use_container_width=True, config=FULL_BAR)
 
             with g2:
                 with st.container(border=True):
-                    # CVD-NOTE: Thay #FF4E6A (đỏ hồng) → Vermillion #D55E00 (đỏ-cam, CVD-safe)
                     fig_box = px.box(promo_df, x="discount_band", y="sold_count",
-                                     color_discrete_sequence=[C[3]],    # Vermillion
+                                     color_discrete_sequence=[C[3]],   
                                      labels={"discount_band": "Dải discount", "sold_count": "Lượt bán"})
                     fig_box.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Phân bố lượt bán thực tế (Log Scale)</b>", font=dict(size=14)))
                     fig_box.update_yaxes(type="log")
@@ -603,7 +554,6 @@ with T3:
         c1, c2 = st.columns(2)
         with c1:
             with st.container(border=True):
-                # CVD-NOTE: Palette C đã là CVD-safe; bỏ #FF4E6A (đỏ hồng) → dùng C array
                 fig_scatter = px.scatter(price_df, x="price_current", y="sold_count",
                                           color=color_col, log_x=True, log_y=True, opacity=0.6,
                                           color_discrete_sequence=C,
@@ -620,8 +570,6 @@ with T3:
                     bin_df["price_bin"] = bin_df["price_bin"].astype(str)
 
                     fig_mix = make_subplots(specs=[[{"secondary_y": True}]])
-                    # CVD-NOTE: Blue (#0072B2) cho Bar, Orange (#E69F00) cho Line
-                    # → Blue/Orange là "most common CVD-friendly combination" (Ch.33)
                     fig_mix.add_trace(go.Bar(x=bin_df["price_bin"], y=bin_df["revenue"]/1e9, name="Doanh thu (Tỷ)", marker_color=C[0]), secondary_y=False)
                     fig_mix.add_trace(go.Scatter(x=bin_df["price_bin"], y=bin_df["avg_sold"], mode="lines+markers", name="Lượt bán TB", line=dict(color=C[1], width=3)), secondary_y=True)
                     
@@ -643,11 +591,8 @@ with T3:
             with st.container(border=True):
                 corr_df = d[req_rtg].corr(method="spearman")
                 corr_df.columns = ["Giá", "Rating", "Review", "Lượt bán"]; corr_df.index = ["Giá", "Rating", "Review", "Lượt bán"]
-                # CVD-NOTE: Thay "RdBu_r" → "RdYlBu" hoặc "PuOr"
-                # RdBu dùng Red-Blue: Red bị nhầm với Green ở người protanopia
-                # PuOr (Purple-Orange) hoặc RdYlBu (đỏ→vàng→xanh) tốt hơn cho CVD heatmap tương quan
                 fig_corr = px.imshow(corr_df, text_auto=".2f", aspect="auto",
-                                     color_continuous_scale="PuOr",     # Tím-Cam: CVD-safe diverging
+                                     color_continuous_scale="PuOr",     
                                      color_continuous_midpoint=0)
                 fig_corr.update_layout(**fig_layout(height=400, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Ma trận tương quan Spearman</b>", font=dict(size=14)))
                 st.plotly_chart(fig_corr, use_container_width=True, config=FULL_BAR)
@@ -657,10 +602,8 @@ with T3:
                 d2 = d[(d["rating"] >= 0) & (d["rating"] <= 5)].copy()
                 d2["rating_group"] = d2["rating"].round(1).astype(str)
                 d2 = d2.sort_values("rating_group")
-                # CVD-NOTE: Thay Teal #2DDBB4 → Bluish Green #44AA99 (C[4])
-                # #2DDBB4 là pure teal/green → có thể nhầm với đỏ; #44AA99 có thêm blue (Ch.33)
                 fig_box = px.box(d2, x="rating_group", y="sold_count",
-                                 color_discrete_sequence=[C[4]],    # Bluish Green
+                                 color_discrete_sequence=[C[4]],    
                                  labels={"rating_group": "Mức Rating", "sold_count": "Lượt bán"})
                 fig_box.update_layout(**fig_layout(height=400, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Phân phối lượt bán theo nhóm Rating</b>", font=dict(size=14)))
                 fig_box.update_yaxes(type="log")
@@ -677,10 +620,8 @@ with T3:
             pivot = d3.pivot_table(values="sold_count", index="rating_segment", columns="review_segment", aggfunc="mean", observed=False)
             
             if not pivot.empty:
-                # CVD-NOTE: Thay "Blues" → "Cividis"
-                # Blues: blue→white → mất contrast ở giá trị cao; Cividis: perceptually-uniform & CVD-safe
                 fig_heat = px.imshow(pivot, text_auto=".0f", aspect="auto",
-                                     color_continuous_scale="Cividis",   # CVD-safe thay Blues
+                                     color_continuous_scale="Cividis", 
                                      labels=dict(x="Lượng Review", y="Mức Rating", color="Lượt bán TB"))
                 fig_heat.update_layout(**fig_layout(height=450, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Hiệu ứng kết hợp: Rating × Khối lượng Review</b>", font=dict(size=14)))
                 st.plotly_chart(fig_heat, use_container_width=True, config=FULL_BAR)
@@ -726,8 +667,6 @@ with T4:
         c1, c2 = st.columns(2)
         with c1:
             with st.container(border=True):
-                # CVD-NOTE: Dùng C array (đã loại green thuần, pink/magenta)
-                # Thứ tự: Blue, Orange, Sky Blue, Vermillion, Bluish Green
                 fig_bar = px.bar(agg, x=category_col, y="sold_count", color="price_bucket", barmode="group",
                                  color_discrete_sequence=C,
                                  labels={category_col: "Danh mục", "sold_count": "Lượt bán TB", "price_bucket": "Phân khúc"})
@@ -737,7 +676,6 @@ with T4:
         with c2:
             with st.container(border=True):
                 heat = agg.pivot(index=category_col, columns="price_bucket", values="sold_count")
-                # CVD-NOTE: Thay "Blues" → "Cividis" — CVD-safe sequential colorscale
                 fig_heat = px.imshow(heat, text_auto=".0f", aspect="auto",
                                      color_continuous_scale="Cividis",
                                      labels=dict(x="Phân khúc giá", y="Danh mục", color="Lượt bán TB"))
@@ -759,9 +697,6 @@ with T4:
         d1, d2 = st.columns(2)
         with d1:
             with st.container(border=True):
-                # CVD-NOTE: Thay Orange (#FF5F1F) + Blue (#0062FF)
-                # → Vermillion (#D55E00) + Blue (#0072B2): đúng tone CVD-safe
-                # "blue/orange or blue/red would work" (Ch.33)
                 discount_mean = y2.groupby("Trang_Thai_Giam_Gia", as_index=False)["sold_count"].mean()
                 fig_bar2 = px.bar(discount_mean, x="Trang_Thai_Giam_Gia", y="sold_count",
                                   color="Trang_Thai_Giam_Gia",
@@ -839,10 +774,8 @@ with T5:
 
         with c2:
             with st.container(border=True):
-                # CVD-NOTE: Thay #FF5F1F (cam-đỏ) → C[1] Orange (#E69F00)
-                # Orange thuần CVD-safe hơn orange-red; vẫn contrast tốt vs Blue
                 fig_box = px.box(d, x="price_bucket", y="sold_count",
-                                 color_discrete_sequence=[C[1]],   # Orange
+                                 color_discrete_sequence=[C[1]],   
                                  labels={"price_bucket": "Phân khúc giá", "sold_count": "Lượt bán"})
                 fig_box.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Phân phối Lượt bán theo phân khúc (Log Scale)</b>", font=dict(size=14)))
                 fig_box.update_yaxes(type="log")
@@ -851,7 +784,6 @@ with T5:
         with st.container(border=True):
             seg = d.groupby("price_bucket", observed=False).agg(revenue=("revenue_est", "sum"), sold_mean=("sold_count", "mean")).reset_index()
             fig_mix = make_subplots(specs=[[{"secondary_y": True}]])
-            # CVD-NOTE: Blue Bar + Orange Line = canonical CVD-friendly dual-axis (Ch.21 "Orange/Blue is CVD Friendly")
             fig_mix.add_trace(go.Bar(x=seg["price_bucket"], y=seg["revenue"]/1e9, name="Doanh thu (Tỷ VND)", marker_color=C[0]), secondary_y=False)
             fig_mix.add_trace(go.Scatter(x=seg["price_bucket"], y=seg["sold_mean"], mode="lines+markers", name="Lượt bán TB", line=dict(color=C[1], width=3)), secondary_y=True)
             fig_mix.update_layout(**fig_layout(height=450, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Doanh thu và Lượt bán TB theo phân khúc</b>", font=dict(size=14)))
@@ -865,11 +797,8 @@ with T5:
                 d_heat = d.copy()
                 d_heat["rating_group"] = d_heat["rating"].round(1)
                 pivot = d_heat.pivot_table(values="sold_count", index="price_bucket", columns="rating_group", aggfunc="mean", observed=False)
-                # CVD-NOTE: Thay "YlGnBu" → "Cividis"
-                # YlGnBu dùng Yellow-Green-Blue; Green component gây vấn đề với protanopia
-                # Cividis (blue→yellow) được thiết kế đặc biệt cho CVD
                 fig_heat = px.imshow(pivot, aspect="auto",
-                                     color_continuous_scale="Cividis",   # CVD-safe
+                                     color_continuous_scale="Cividis", 
                                      text_auto=".0f",
                                      labels=dict(x="Mức Rating", y="Phân khúc giá", color="Lượt bán TB"))
                 fig_heat.update_layout(**fig_layout(height=450, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Heatmap Lượt bán TB theo Phân khúc & Rating</b>", font=dict(size=14)))
@@ -909,10 +838,7 @@ with T6:
         trust_series = (df["rating"] * 0.7) + (np.log1p(df["review_count"]) * 0.3)
         trust_text = f"{trust_series.mean():.2f}" if not trust_series.dropna().empty else "N/A"
 
-    # CVD-NOTE: Thay #2DDBB4 (teal/green) → C[4] Bluish Green #44AA99 cho positive
-    # Thay #FF4E6A (đỏ hồng) → C[3] Vermillion #D55E00 cho negative
-    # Tránh red-green pair; dùng blue-family (teal có blue) vs orange-family (vermillion)
-    delta_color = C[4] if delta_val > 0 else C[3]   # Bluish Green vs Vermillion
+    delta_color = C[4] if delta_val > 0 else C[3]   
     st.markdown(f"""
     <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
         <div class="kpi-cell"><span class="kpi-tag">Lượt bán TB (Giá tâm lý)</span><div class="kpi-num hot">{psy_avg_text}</div></div>
@@ -935,14 +861,11 @@ with T6:
         psy_viz["label"] = psy_viz["is_psy_price"].map({True: "Giá có đuôi 9 (Tâm lý)", False: "Giá thông thường"})
 
         with st.container(border=True):
-            # CVD-NOTE: Blue cho "Tâm lý", Sky Blue cho "Thường"
-            # → phân biệt bằng độ đậm nhạt (dark vs light) trong cùng blue family
-            # "light vs dark" là cách phân biệt CVD-safe (Ch.33)
             fig1 = px.bar(psy_viz.sort_values("sold_count", ascending=False),
                           x="label", y="sold_count", color="label", text_auto=".0f",
                           color_discrete_map={
-                              "Giá có đuôi 9 (Tâm lý)": C[0],    # Blue đậm
-                              "Giá thông thường": C[2]             # Sky Blue nhạt
+                              "Giá có đuôi 9 (Tâm lý)": C[0],  
+                              "Giá thông thường": C[2]             
                           },
                           labels={"label": "Chiến lược giá", "sold_count": "Lượt bán TB"})
             fig1.update_layout(**fig_layout(height=450, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>So sánh Lượt bán TB: Giá đuôi 9 vs Giá tròn</b>", font=dict(size=14)), showlegend=False)
@@ -960,12 +883,10 @@ with T6:
             hover_name = "product_name" if "product_name" in d2.columns else None
             
             with st.container(border=True):
-                # CVD-NOTE: Thay [#FF5F1F, #0062FF] → [C[1], C[0]] = [Orange, Blue]
-                # Orange (#E69F00) + Blue (#0072B2) = canonical CVD-safe pair từ Ch.1, Ch.21, Ch.33
                 fig2 = px.scatter(d2, x="trust_index_score", y="sold_count",
                                    size="revenue_est" if "revenue_est" in d2.columns else None,
                                    color=color_col, hover_name=hover_name, opacity=0.7,
-                                   color_discrete_sequence=[C[1], C[0]],   # Orange, Blue
+                                   color_discrete_sequence=[C[1], C[0]],   
                                    labels={"trust_index_score": "Điểm Trust Index", "sold_count": "Lượt bán", "is_mall": "Loại Gian Hàng", "revenue_est": "Doanh thu"})
                 fig2.update_layout(**fig_layout(height=500, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Tương quan giữa Trust Index và Lượt bán thực tế</b>", font=dict(size=14)))
                 fig2.update_yaxes(type="log")
