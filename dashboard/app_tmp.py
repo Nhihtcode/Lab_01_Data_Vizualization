@@ -1,3 +1,10 @@
+"""
+╔══════════════════════════════════════════════════════════════╗
+║   TIKI INTELLIGENCE — Premium E-Commerce Analytics          ║
+║   Lab 01 · Data Visualization · VNU-HCMUS · Team 13         ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
 from numpy.compat import Path
 import streamlit as st
 import pandas as pd
@@ -6,102 +13,141 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  PAGE CONFIG
+#  1. MASTER CSS (Tách biệt hoàn toàn phần Giao diện)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-st.set_page_config(
-    page_title="TIKI INTELLIGENCE",
-    page_icon="◈",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+def inject_custom_css(c):
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    :root {{ 
+        --f-body: 'Inter', -apple-system, sans-serif; --r-lg: 12px;
+        --void: {c['void']}; --surface: {c['surf']}; 
+        --t1: {c['t1']}; --t2: {c['t2']}; --t3: {c['t3']}; 
+        --neon: {c['acc']}; --rail: {c['rail']}; 
+    }} 
+    
+    /* Ép tất cả chữ cơ bản của Streamlit đổi màu theo Theme */
+    html, body, [class*="css"] {{ font-family: var(--f-body) !important; color: var(--t1) !important; }}
+    [data-testid="stAppViewContainer"] {{ background-color: var(--void) !important; }}
+    
+    [data-testid="stAppViewContainer"] p, 
+    [data-testid="stAppViewContainer"] span, 
+    [data-testid="stAppViewContainer"] label, 
+    [data-testid="stAppViewContainer"] h1, 
+    [data-testid="stAppViewContainer"] h2, 
+    [data-testid="stAppViewContainer"] h3, 
+    [data-testid="stAppViewContainer"] li {{
+        color: var(--t1) !important;
+    }}
+
+    /* =========================================================
+       FIX LỖI CHỮ BỊ TÀNG HÌNH TRONG CÁC Ô INPUT (SELECT, POPOVER) 
+       Ép nền Trắng và chữ Đen cho các ô này để luôn dễ đọc
+       ========================================================= */
+    [data-baseweb="select"] *,
+    [data-testid="stPopover"] button,
+    [data-testid="stPopover"] button * {{
+        color: #0F172A !important; 
+    }}
+    
+    [data-testid="stPopover"] button {{
+        background-color: #FFFFFF !important;
+        border-color: var(--rail) !important;
+    }}
+    /* ========================================================= */
+
+    header[data-testid="stHeader"] {{ background: rgba(0,0,0,0) !important; visibility: visible !important; }}
+    #MainMenu, footer {{ visibility: hidden; }}
+    
+    /* Giao diện Sidebar */
+    [data-testid="stSidebar"] {{ background: var(--surface) !important; border-right: 1px solid var(--rail) !important; }}
+    .sb-brand {{ padding: 0.5rem 0 1rem; text-align: center; }}
+    .sb-logo {{ font-size: 1.6rem; font-weight: 800; color: var(--t1) !important; }}
+    .sb-logo span {{ color: var(--neon) !important; }}
+    .sb-sub {{ font-size: 0.6rem; color: var(--t3) !important; letter-spacing: 0.1em; text-transform: uppercase; }}
+    
+    /* Căn chỉnh nút Popover */
+    div[data-testid="stPopover"] button {{ width: 100% !important; border-radius: 8px !important; text-align: left !important; font-family: 'Inter', sans-serif !important; padding: 10px 15px !important; }}
+    div[data-testid="stPopover"] button:hover {{ border-color: var(--neon) !important; }}
+    div[data-testid="stSelectbox"] input {{ pointer-events: none; }}
+    
+    /* Giao diện KPI Grid */
+    .site-header {{ padding: 1.5rem 0; border-bottom: 1px solid var(--rail); margin-bottom: 2rem; }}
+    .kpi-grid {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--rail); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 2rem; }}
+    .kpi-cell {{ background: var(--surface); padding: 1.2rem; text-align: center; border: 1px solid var(--rail); }}
+    
+    .kpi-tag {{ font-size: 0.85rem; font-weight: 600; color: var(--t2) !important; text-transform: uppercase; margin-bottom: 4px; display: block; }}
+    .kpi-sub {{ font-size: 0.75rem; color: var(--t3) !important; margin-top: 4px; display: block; }}
+    .kpi-num {{ font-size: 1.6rem; font-weight: 800; color: var(--t1) !important; line-height: 1.2; }}
+    .kpi-num.hot {{ color: var(--neon) !important; }}
+
+    /* Khung viền bọc biểu đồ của Streamlit */
+    [data-testid="stVerticalBlockBorderWrapper"] {{
+        background-color: var(--surface) !important;
+        border: 1px solid var(--rail) !important;
+        border-radius: var(--r-lg) !important;
+        padding: 1.5rem !important; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-sizing: border-box !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  2. PAGE CONFIG & DATA LOADER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+st.set_page_config(page_title="TIKI INTELLIGENCE", page_icon="◈", layout="wide", initial_sidebar_state="expanded")
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
-DATA_CANDIDATES = [
-    DATA_DIR / "fact_product_enriched.csv",
-    DATA_DIR / "fact_product_merged.csv",
-]
+DATA_CANDIDATES = [DATA_DIR / "fact_product_enriched.csv", DATA_DIR / "fact_product_merged.csv"]
 
 def normalize_bool(series: pd.Series) -> pd.Series:
     mapping = {"true": True, "false": False, "1": True, "0": False, "yes": True, "no": False}
     return series.astype(str).str.strip().str.lower().map(mapping).fillna(False)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DATA LOADER
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 @st.cache_data(show_spinner="Đang nạp dữ liệu...")
 def load_data():
     df = pd.DataFrame()
-    source_name = "Dữ liệu mô phỏng (Dummy)"
-
     for path in DATA_CANDIDATES:
         if path.exists():
-            try:
-                df = pd.read_csv(path, encoding="utf-8-sig")
-                source_name = path.name
-                break
-            except Exception as e:
-                st.error(f"Lỗi khi đọc file {path.name}: {e}")
-
-    if df.empty:
-        rng = np.random.default_rng(42)
-        N = 800
+            df = pd.read_csv(path, encoding="utf-8-sig"); break
+            
+    if df.empty: # Dummy Data
+        rng = np.random.default_rng(42); N = 800
         df = pd.DataFrame({
             "product_id": [f"tiki_{i}" for i in range(N)],
             "category_name": rng.choice(["Điện tử", "Gia dụng", "Sách", "Mỹ phẩm", "Thời trang"], N),
             "price_current": np.exp(rng.normal(12, 1.2, N)).clip(10000, 50000000),
-            "discount_percent": rng.uniform(0, 50, N),
-            "sold_count": rng.integers(0, 5000, N),
-            "rating": rng.uniform(3.5, 5.0, N),
-            "review_count": rng.integers(0, 1000, N),
-            "is_mall": rng.choice([True, False], N),
-            "has_video": rng.choice([True, False], N),
-            "is_freeship": rng.choice([True, False], N),
-            "crawled_at": pd.date_range("2026-04-01", periods=N, freq="H")
+            "discount_percent": rng.uniform(0, 50, N), "sold_count": rng.integers(0, 5000, N),
+            "rating": rng.uniform(3.5, 5.0, N), "review_count": rng.integers(0, 1000, N),
+            "is_mall": rng.choice([True, False], N), "has_video": rng.choice([True, False], N),
+            "is_freeship": rng.choice([True, False], N)
         })
 
     if "discount_percent" in df.columns:
-        bins = [-1, 0, 10, 30, 50, 70, 101]
-        labels = ["0%", "1–10%", "11–30%", "31–50%", "51–70%", ">70%"]
-        df["discount_bucket"] = pd.cut(df["discount_percent"].fillna(0), bins=bins, labels=labels)
-    else:
-        df["discount_bucket"] = "0%"
-
-    numeric_cols = ["price_current", "price_original", "sold_count", "rating", "review_count", "image_count", "review_with_image_count", "five_star_with_image_count", "discount_percent", "promotion_label_count", "shipping_fee", "shop_rating", "follower_count", "response_rate"]
-    for col in numeric_cols:
-        if col in df.columns: df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    bool_cols = ["has_video", "is_mall", "is_freeship", "price_ends_with_9", "has_freeship_xtra_label", "has_coinback_label", "has_voucher_label"]
-    for col in bool_cols:
+        df["discount_bucket"] = pd.cut(df["discount_percent"].fillna(0), bins=[-1, 0, 10, 30, 50, 70, 101], labels=["0%", "1–10%", "11–30%", "31–50%", "51–70%", ">70%"])
+    df["revenue_est"] = df.get("price_current", 0) * df.get("sold_count", 0).fillna(0)
+    for col in ["has_video", "is_mall", "is_freeship"]:
         if col in df.columns: df[col] = normalize_bool(df[col])
+    return df
 
-    if "crawled_at" in df.columns: df["crawl_dt"] = pd.to_datetime(df["crawled_at"], errors="coerce")
-    if "price_original" not in df.columns and "price_current" in df.columns:
-        df["price_original"] = df["price_current"] / (1 - df["discount_percent"].fillna(0)/100 + 1e-9)
-    if "revenue_est" not in df.columns and "price_current" in df.columns:
-        df["revenue_est"] = df["price_current"] * df["sold_count"].fillna(0)
-
-    return df, source_name
-
-df_raw, source_name = load_data()
+df_raw = load_data()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  SIDEBAR
+#  3. SIDEBAR & BỘ LỌC
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
-    st.markdown("""
-    <div class="sb-brand">
-      <div class="sb-logo">◈ TIKI <span>ANALYTICS</span></div>
-      <div class="sb-sub">Analytics Platform · v2.0</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="sb-brand"><div class="sb-logo">◈ TIKI <span>ANALYTICS</span></div><div class="sb-sub">Analytics Platform · v2.0</div></div>', unsafe_allow_html=True)
     st.divider()
 
-    st.markdown("### BỘ LỌC DỮ LIỆU")
+    st.markdown("###  BỘ LỌC DỮ LIỆU")
     all_cats = sorted(df_raw["category_name"].dropna().unique())
-    with st.popover("CHỌN DANH MỤC"):
+    with st.popover(" CHỌN DANH MỤC"):
         select_all = st.toggle("Chọn tất cả", value=True)
         sel_cats = [cat for cat in all_cats if st.checkbox(cat, value=select_all, key=f"sb_{cat}")]
     
@@ -109,109 +155,62 @@ with st.sidebar:
     disc_min = st.slider("Discount tối thiểu (%)", 0, 100, 0)
     rat_min  = st.slider("Rating tối thiểu", 0.0, 5.0, 0.0, 0.1)
     
-    with st.popover("CHỌN LOẠI VẬN CHUYỂN"):
+    with st.popover(" VẬN CHUYỂN"):
         ship_opt = st.radio("Trạng thái Freeship:", options=["Tất cả", "Có freeship", "Không freeship"], index=0, key="ship_radio")
 
     st.markdown('<div style="flex-grow: 1;"></div>', unsafe_allow_html=True) 
     st.divider()
-    st.markdown("""
-    <div style="text-align: center; font-size: 0.75rem; color: var(--t3); padding: 5px 0;">
-        <div style="font-weight: 700; color: var(--t2); margin-bottom: 5px;">DEVELOPED BY TEAM 13</div>
-        Tuan • Thinh • The Anh • Y • Duong
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center; font-size:0.75rem; color:var(--t3); padding:5px 0;"><div style="font-weight:700; color:var(--t2); margin-bottom:5px;">DEVELOPED BY TEAM 13</div>Tuan • Thinh • The Anh • Y • Duong</div>', unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  FILTER & HEADER TOP BAR
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Lọc dữ liệu
 df = df_raw.copy()
 if sel_cats: df = df[df["category_name"].isin(sel_cats)]
 else: df = df.iloc[0:0]
-
 df = df[(df["price_current"] >= price_r[0]) & (df["price_current"] <= price_r[1])]
 df = df[df["discount_percent"].fillna(0) >= disc_min]
 df = df[df["rating"].fillna(0) >= rat_min]
-
 if ship_opt == "Có freeship": df = df[df["is_freeship"] == True]
 elif ship_opt == "Không freeship": df = df[df["is_freeship"] == False]
 
-N = len(df)
-pct = N / max(1, len(df_raw)) * 100
+N = len(df); pct = N / max(1, len(df_raw)) * 100
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  4. HEADER & THEME LOGIC
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 h_left, h_right = st.columns([5, 1])
-
 with h_right:
     theme_choice = st.selectbox("🎨 GIAO DIỆN", ["Sáng", "Tối", "Mù màu", "Hệ thống"], index=0, key="theme_mode")
-
-    # Xử lý Logic màu sắc 
     if theme_choice == "Sáng":
-        # Chế độ Sáng: Trắng tinh khiết, độ tương phản cao
         c = {"void": "#FFFFFF", "surf": "#F8FAFC", "t1": "#0F172A", "t2": "#334155", "t3": "#64748B", "acc": "#0062FF", "rail": "rgba(0,0,0,0.05)"}
     elif theme_choice == "Tối":
-        # Chế độ Tối: Xanh đen sâu, chữ trắng sáng
         c = {"void": "#0B0F19", "surf": "#141B2D", "t1": "#FFFFFF", "t2": "#F8FAFC", "t3": "#CBD5E1", "acc": "#FF5F1F", "rail": "rgba(255,255,255,0.15)"}
     elif theme_choice == "Mù màu":
         c = {"void": "#F0F0F0", "surf": "#FFFFFF", "t1": "#000000", "t2": "#333333", "t3": "#555555", "acc": "#0072B2", "rail": "rgba(0,0,0,0.15)"}
-    else: # Chế độ Hệ thống: Màu xám nhẹ (Soft Mode), dịu mắt hơn chế độ Sáng
+    else: 
         c = {"void": "#F1F5F9", "surf": "#FFFFFF", "t1": "#1E293B", "t2": "#475569", "t3": "#94A3B8", "acc": "#0F172A", "rail": "rgba(0,0,0,0.08)"}
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    :root {{ 
-        --f-body: 'Inter', -apple-system, sans-serif; --r-lg: 12px;
-        --void: {c['void']}; --surface: {c['surf']}; 
-        --t1: {c['t1']}; --t2: {c['t2']}; --t3: {c['t3']}; 
-        --neon: {c['acc']}; --rail: {c['rail']}; 
-    }} 
-    html, body, [class*="css"] {{ font-family: var(--f-body) !important; color: var(--t1) !important; }}
-    [data-testid="stAppViewContainer"] {{ background-color: var(--void) !important; }}
-    header[data-testid="stHeader"] {{ background: rgba(0,0,0,0) !important; visibility: visible !important; }}
-    #MainMenu, footer {{ visibility: hidden; }}
-    [data-testid="stSidebar"] {{ background: var(--surface) !important; border-right: 1px solid var(--rail) !important; }}
-    .sb-brand {{ padding: 0.5rem 0 1rem; text-align: center; }}
-    .sb-logo {{ font-size: 1.6rem; font-weight: 800; color: var(--t1); }}
-    .sb-logo span {{ color: var(--neon); }}
-    .sb-sub {{ font-size: 0.6rem; color: var(--t3); letter-spacing: 0.1em; text-transform: uppercase; }}
-    div[data-testid="stPopover"] > button {{ width: 100% !important; border-radius: 8px !important; border: 1px solid var(--rail) !important; background-color: var(--surface) !important; color: var(--t1) !important; text-align: left !important; font-family: 'Inter', sans-serif !important; padding: 10px 15px !important; }}
-    div[data-testid="stPopover"] > button:hover {{ border-color: var(--neon) !important; background-color: var(--surface) !important; }}
-    div[data-testid="stSelectbox"] input {{ pointer-events: none; }}
-    .site-header {{ padding: 1.5rem 0; border-bottom: 1px solid var(--rail); margin-bottom: 2rem; }}
-    .kpi-grid {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--rail); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 2rem; }}
-    .kpi-cell {{ background: var(--surface); padding: 1.2rem; text-align: center; border: 1px solid var(--rail); }}
-    .kpi-num {{ font-size: 1.6rem; font-weight: 800; color: var(--t1); }}
-    .kpi-num.hot {{ color: var(--neon); }}
-
-    [data-testid="stVerticalBlockBorderWrapper"] {{
-        background-color: var(--surface) !important;
-        border: 1px solid var(--rail) !important;
-        border-radius: var(--r-lg) !important;
-        padding: 1.5rem !important; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+    
+    # Kích hoạt CSS
+    inject_custom_css(c)
 
 with h_left:
     st.markdown(f"""
-    <div class="site-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-      <div>
-        <div style="font-size: 0.75rem; color: var(--t3); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 5px;">◈ E-COMMERCE INTELLIGENCE · LAB 01 · HCMUS</div>
-        <div style="font-size: 2.4rem; font-weight: 800; color: var(--t1); line-height: 1;">TIKI <em style="color:var(--neon); font-style:normal;">ANALYTICS</em></div>
-      </div>
+    <div class="site-header" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+        <div style="font-size:0.75rem; color:var(--t3); font-weight:700; letter-spacing:0.05em; margin-bottom:5px;">◈ E-COMMERCE INTELLIGENCE · LAB 01 · HCMUS</div>
+        <div style="font-size:2.4rem; font-weight:800; color:var(--t1); line-height:1;">TIKI <em style="color:var(--neon); font-style:normal;">ANALYTICS</em></div>
     </div>
     """, unsafe_allow_html=True)
-
 st.markdown('<div style="border-bottom: 1px solid var(--rail); margin: 15px 0 25px 0;"></div>', unsafe_allow_html=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  PLOTLY ENGINE
+#  5. PLOTLY ENGINE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-C   = ["#0062FF", "#FF5F1F", "#2DDBB4", "#FF4E6A", "#E8B86D"]
+C = ["#0062FF", "#FF5F1F", "#2DDBB4", "#FF4E6A", "#E8B86D"]
 FULL_BAR = dict(displayModeBar=True, scrollZoom=True)
 
-def fig_layout(height=360, x_title=None, y_title=None, x_log=False, y_log=False, horizontal_legend=False, margin=None):
-    txt_color = c["t1"] if "c" in globals() else "#0F172A"
-    grid_color = c["rail"] if "c" in globals() else "rgba(0,0,0,0.08)"
+def fig_layout(height=400, x_title=None, y_title=None, x_log=False, y_log=False, horizontal_legend=False, margin=None):
+    txt_color = c["t1"]
+    grid_color = c["rail"]
+    
     _AX = dict(gridcolor=grid_color, zeroline=False, tickfont=dict(size=10, family="Inter", color=txt_color))
     layout = dict(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor ="rgba(0,0,0,0)",
@@ -246,7 +245,7 @@ def accessible_plotly_chart(fig, **kwargs):
 st.plotly_chart = accessible_plotly_chart
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  TABS
+#  6. TABS CONTENT
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 T1, T2, T3, T4, T5, T6 = st.tabs([
     "01 — TỔNG QUAN", 
@@ -324,7 +323,7 @@ with T2:
             with c1:
                 with st.container(border=True):
                     fig_score = px.scatter(mall_df, x="display_quality_score", y="sold_count", color=mall_df["has_video_num"].map({1: "Có video", 0: "Không video"}), color_discrete_sequence=["#0062FF", "#FF5F1F"], labels={"display_quality_score": "Điểm trưng bày", "sold_count": "Lượt bán", "color": "Trạng thái"})
-                    fig_score.update_layout(**fig_layout(height=420, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Điểm trưng bày và lượt bán</b>", font=dict(size=14)))
+                    fig_score.update_layout(**fig_layout(height=420, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Điểm trưng bày và lượt bán</b>", font=dict(size=14)))
                     st.plotly_chart(fig_score, use_container_width=True, config=FULL_BAR)
 
             with c2:
@@ -394,7 +393,7 @@ with T3:
     """, unsafe_allow_html=True)
 
     req_price = ["price_current", "sold_count"]
-    if all(c in df.columns for c in req_price):
+    if all(col in df.columns for col in req_price):
         price_df = df.dropna(subset=req_price).copy()
         price_df = price_df[(price_df["price_current"] > 0) & (price_df["sold_count"] > 0)]
         color_col = "price_bucket" if "price_bucket" in price_df.columns else None
@@ -428,7 +427,7 @@ with T3:
 
     st.markdown('<div style="margin: 2.5rem 0 1.5rem 0;"><h3 style="color: var(--t1); font-weight: 700; font-size: 1.4rem;">◈ TÁC ĐỘNG CỦA RATING & REVIEW</h3></div>', unsafe_allow_html=True)
     req_rtg = ["price_current", "rating", "review_count", "sold_count"]
-    if all(c in df.columns for c in req_rtg):
+    if all(col in df.columns for col in req_rtg):
         d = df.dropna(subset=req_rtg).copy()
         
         c3, c4 = st.columns([1, 1.3])
@@ -477,7 +476,6 @@ with T4:
     category_col = "category_name"
     n_cats = df[category_col].nunique() if category_col in df.columns else 0
     n_buckets = df['price_bucket'].astype(str).nunique() if "price_bucket" in df.columns else 0
-    
     disc_ratio = (df["discount_percent"].fillna(0) > 0).mean() * 100 if "discount_percent" in df.columns else 0
     
     lift_text = "N/A"
@@ -608,7 +606,7 @@ with T5:
             fig_mix = make_subplots(specs=[[{"secondary_y": True}]])
             fig_mix.add_trace(go.Bar(x=seg["price_bucket"], y=seg["revenue"]/1e9, name="Doanh thu (Tỷ VND)", marker_color="#2DDBB4"), secondary_y=False)
             fig_mix.add_trace(go.Scatter(x=seg["price_bucket"], y=seg["sold_mean"], mode="lines+markers", name="Lượt bán TB", line=dict(color="#FF4E6A", width=3)), secondary_y=True)
-            fig_mix.update_layout(**fig_layout(height=450, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Doanh thu và Lượt bán TB theo phân khúc</b>", font=dict(size=14)))
+            fig_mix.update_layout(**fig_layout(height=450, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Doanh thu và Lượt bán TB theo phân khúc</b>", font=dict(size=14)))
             fig_mix.update_yaxes(title_text="Doanh thu (Tỷ)", gridcolor="rgba(128,128,128,0.1)", secondary_y=False)
             fig_mix.update_yaxes(title_text="Lượt bán TB", gridcolor="rgba(0,0,0,0)", secondary_y=True)
             st.plotly_chart(fig_mix, use_container_width=True, config=FULL_BAR)
@@ -694,7 +692,7 @@ with T6:
             
             with st.container(border=True):
                 fig2 = px.scatter(d2, x="trust_index_score", y="sold_count", size="revenue_est" if "revenue_est" in d2.columns else None, color=color_col, hover_name=hover_name, opacity=0.7, color_discrete_sequence=["#FF5F1F", "#0062FF"], labels={"trust_index_score": "Điểm Trust Index", "sold_count": "Lượt bán", "is_mall": "Loại Gian Hàng", "revenue_est": "Doanh thu"})
-                fig2.update_layout(**fig_layout(height=500, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Tương quan giữa Trust Index và Lượt bán thực tế</b>", font=dict(size=14)))
+                fig2.update_layout(**fig_layout(height=500, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Tương quan giữa Trust Index và Lượt bán thực tế</b>", font=dict(size=14)))
                 fig2.update_yaxes(type="log")
                 st.plotly_chart(fig2, use_container_width=True, config=FULL_BAR)
 
