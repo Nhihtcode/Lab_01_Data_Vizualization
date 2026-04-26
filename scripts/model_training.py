@@ -30,7 +30,7 @@ def get_model(model_name='xgboost'):
                              random_state=42, verbose=-1)
     elif model_name == 'catboost':
         return CatBoostRegressor(n_estimators=1000, learning_rate=0.05, depth=6, 
-                                 random_state=42, verbose=0, early_stopping_rounds=50)
+                                 random_state=42, verbose=0, early_stopping_rounds=50, allow_writing_files=False)
 
 def evaluate_model(model, X_test, y_test):
     """Tính toán metrics trên thang đo thực tế (VND hoặc Sản phẩm)"""
