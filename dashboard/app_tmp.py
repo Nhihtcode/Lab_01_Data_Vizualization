@@ -1,9 +1,5 @@
-"""
-╔══════════════════════════════════════════════════════════════╗
-║   TIKI INTELLIGENCE — Premium E-Commerce Analytics          ║
-║   Lab 01 · Data Visualization · VNU-HCMUS · Team 13         ║
-╚══════════════════════════════════════════════════════════════╝
-"""
+"""Streamlit dashboard tổng hợp toàn bộ EDA của nhóm Lab 01."""
+
 
 from numpy.compat import Path
 import streamlit as st
@@ -17,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  1. MASTER CSS (Tách biệt hoàn toàn phần Giao diện)
+#  1. MASTER CSS 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def inject_custom_css(c):
     st.markdown(f"""
@@ -31,7 +27,6 @@ def inject_custom_css(c):
         --neon: {c['acc']}; --rail: {c['rail']}; 
     }} 
     
-    /* Ép tất cả chữ cơ bản của Streamlit đổi màu theo Theme */
     html, body, [class*="css"] {{ font-family: var(--f-body) !important; color: var(--t1) !important; }}
     [data-testid="stAppViewContainer"] {{ background-color: var(--void) !important; }}
     
@@ -45,10 +40,6 @@ def inject_custom_css(c):
         color: var(--t1) !important;
     }}
 
-    /* =========================================================
-       FIX LỖI CHỮ BỊ TÀNG HÌNH TRONG CÁC Ô INPUT (SELECT, POPOVER) 
-       Ép nền Trắng và chữ Đen cho các ô này để luôn dễ đọc
-       ========================================================= */
     [data-baseweb="select"] *,
     [data-testid="stPopover"] button,
     [data-testid="stPopover"] button * {{
