@@ -1,3 +1,6 @@
+"""Streamlit dashboard tổng hợp toàn bộ EDA của nhóm Lab 01."""
+
+
 from pathlib import Path
 import streamlit as st
 import pandas as pd
@@ -6,102 +9,194 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  PAGE CONFIG
+#  1. MASTER CSS 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-st.set_page_config(
-    page_title="TIKI INTELLIGENCE",
-    page_icon="◈",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+def inject_custom_css(c):
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    :root {{ 
+        --f-body: 'Inter', -apple-system, sans-serif; --r-lg: 12px;
+        --void: {c['void']}; --surface: {c['surf']}; 
+        --t1: {c['t1']}; --t2: {c['t2']}; --t3: {c['t3']}; 
+        --neon: {c['acc']}; --rail: {c['rail']}; 
+    }} 
+    
+    html, body, [class*="css"] {{ font-family: var(--f-body) !important; color: var(--t1) !important; }}
+    [data-testid="stAppViewContainer"] {{ background-color: var(--void) !important; }}
+    
+    [data-testid="stAppViewContainer"] p, 
+    [data-testid="stAppViewContainer"] span, 
+    [data-testid="stAppViewContainer"] label, 
+    [data-testid="stAppViewContainer"] h1, 
+    [data-testid="stAppViewContainer"] h2, 
+    [data-testid="stAppViewContainer"] h3, 
+    [data-testid="stAppViewContainer"] li {{
+        color: var(--t1) !important;
+    }}
+
+    /* Selectbox theo giao diện */
+    [data-testid="stSelectbox"] label {{
+        color: var(--t1) !important;
+        font-weight: 700 !important;
+        font-size: 0.9rem !important;
+    }}
+    [data-baseweb="select"] > div {{
+        background-color: var(--surface) !important;
+        border: 1px solid var(--rail) !important;
+        border-radius: 10px !important;
+    }}
+    [data-baseweb="select"] [role="combobox"] {{
+        color: var(--t1) !important;
+        background-color: transparent !important;
+        font-weight: 500 !important;
+    }}
+    [data-baseweb="select"] > div:focus-within {{
+        border-color: var(--neon) !important;
+        box-shadow: 0 0 0 1px var(--neon) inset !important;
+    }}
+    [data-baseweb="select"] [aria-expanded="true"] {{
+        border-color: var(--neon) !important;
+        box-shadow: 0 0 0 1px var(--neon) inset !important;
+    }}
+    [data-baseweb="popover"] [role="listbox"] {{
+        background-color: var(--surface) !important;
+        border: 1px solid var(--rail) !important;
+        border-radius: 10px !important;
+    }}
+    [data-baseweb="menu"] [role="option"] {{
+        color: var(--t1) !important;
+        background-color: transparent !important;
+    }}
+    [data-baseweb="menu"] [role="option"]:hover {{
+        background-color: var(--rail) !important;
+    }}
+
+    /* Popover theo giao diện */
+    [data-testid="stPopover"] button,
+    [data-testid="stPopover"] button * {{
+        color: var(--t1) !important;
+    }}
+    [data-testid="stPopover"] button {{
+        background-color: var(--surface) !important;
+        border-color: var(--rail) !important;
+    }}
+    /* ========================================================= */
+
+    header[data-testid="stHeader"] {{ background: rgba(0,0,0,0) !important; visibility: visible !important; }}
+    #MainMenu, footer {{ visibility: hidden; }}
+    
+    /* Giao diện Sidebar */
+    [data-testid="stSidebar"] {{ background: var(--surface) !important; border-right: 1px solid var(--rail) !important; }}
+    .sb-brand {{ padding: 0.5rem 0 1rem; text-align: center; }}
+    .sb-logo {{ font-size: 1.6rem; font-weight: 800; color: var(--t1) !important; }}
+    .sb-logo span {{ color: var(--neon) !important; }}
+    .sb-sub {{ font-size: 0.6rem; color: var(--t3) !important; letter-spacing: 0.1em; text-transform: uppercase; }}
+    
+    /* Căn chỉnh nút Popover */
+    div[data-testid="stPopover"] button {{ width: 100% !important; border-radius: 8px !important; text-align: left !important; font-family: 'Inter', sans-serif !important; padding: 10px 15px !important; }}
+    div[data-testid="stPopover"] button:hover {{ border-color: var(--neon) !important; }}
+    div[data-testid="stSelectbox"] input {{ pointer-events: none; }}
+    
+    /* Giao diện KPI Grid */
+    .site-header {{ padding: 1.5rem 0; border-bottom: 1px solid var(--rail); margin-bottom: 2rem; }}
+    .kpi-grid {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--rail); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 2rem; }}
+    .kpi-cell {{ background: var(--surface); padding: 1.2rem; text-align: center; border: 1px solid var(--rail); }}
+    
+    .kpi-tag {{ font-size: 0.85rem; font-weight: 600; color: var(--t2) !important; text-transform: uppercase; margin-bottom: 4px; display: block; }}
+    .kpi-sub {{ font-size: 0.75rem; color: var(--t3) !important; margin-top: 4px; display: block; }}
+    .kpi-num {{ font-size: 1.6rem; font-weight: 800; color: var(--t1) !important; line-height: 1.2; }}
+    .kpi-num.hot {{ color: var(--neon) !important; }}
+
+    /* Khung viền bọc biểu đồ của Streamlit */
+    [data-testid="stVerticalBlockBorderWrapper"] {{
+        background-color: var(--surface) !important;
+        border: 1px solid var(--rail) !important;
+        border-radius: var(--r-lg) !important;
+        padding: 1.5rem !important; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-sizing: border-box !important;
+    }}
+
+    /* DataFrame theo giao diện */
+    div[data-testid="stDataFrame"] {{
+        background-color: var(--surface) !important;
+        border: 1px solid var(--rail) !important;
+        border-radius: 10px !important;
+    }}
+    div[data-testid="stDataFrame"] [role="grid"] {{
+        background-color: var(--surface) !important;
+        color: var(--t1) !important;
+    }}
+    div[data-testid="stDataFrame"] [role="columnheader"] {{
+        background-color: var(--surface) !important;
+        color: var(--t1) !important;
+        font-weight: 700 !important;
+        border-bottom: 1px solid var(--rail) !important;
+    }}
+    div[data-testid="stDataFrame"] [role="gridcell"] {{
+        background-color: var(--surface) !important;
+        color: var(--t1) !important;
+        border-top: 1px solid var(--rail) !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  2. PAGE CONFIG & DATA LOADER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+st.set_page_config(page_title="TIKI INTELLIGENCE", page_icon="◈", layout="wide", initial_sidebar_state="expanded")
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
-DATA_CANDIDATES = [
-    DATA_DIR / "fact_product_enriched.csv",
-    DATA_DIR / "fact_product_merged.csv",
-]
+DATA_CANDIDATES = [DATA_DIR / "fact_product_enriched.csv", DATA_DIR / "fact_product_merged.csv"]
 
 def normalize_bool(series: pd.Series) -> pd.Series:
     mapping = {"true": True, "false": False, "1": True, "0": False, "yes": True, "no": False}
     return series.astype(str).str.strip().str.lower().map(mapping).fillna(False)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  DATA LOADER
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 @st.cache_data(show_spinner="Đang nạp dữ liệu...")
 def load_data():
     df = pd.DataFrame()
-    source_name = "Dữ liệu mô phỏng (Dummy)"
-
     for path in DATA_CANDIDATES:
         if path.exists():
-            try:
-                df = pd.read_csv(path, encoding="utf-8-sig")
-                source_name = path.name
-                break
-            except Exception as e:
-                st.error(f"Lỗi khi đọc file {path.name}: {e}")
-
-    if df.empty:
-        rng = np.random.default_rng(42)
-        N = 800
+            df = pd.read_csv(path, encoding="utf-8-sig"); break
+            
+    if df.empty: # Dummy Data
+        rng = np.random.default_rng(42); N = 800
         df = pd.DataFrame({
             "product_id": [f"tiki_{i}" for i in range(N)],
             "category_name": rng.choice(["Điện tử", "Gia dụng", "Sách", "Mỹ phẩm", "Thời trang"], N),
             "price_current": np.exp(rng.normal(12, 1.2, N)).clip(10000, 50000000),
-            "discount_percent": rng.uniform(0, 50, N),
-            "sold_count": rng.integers(0, 5000, N),
-            "rating": rng.uniform(3.5, 5.0, N),
-            "review_count": rng.integers(0, 1000, N),
-            "is_mall": rng.choice([True, False], N),
-            "has_video": rng.choice([True, False], N),
-            "is_freeship": rng.choice([True, False], N),
-            "crawled_at": pd.date_range("2026-04-01", periods=N, freq="H")
+            "discount_percent": rng.uniform(0, 50, N), "sold_count": rng.integers(0, 5000, N),
+            "rating": rng.uniform(3.5, 5.0, N), "review_count": rng.integers(0, 1000, N),
+            "is_mall": rng.choice([True, False], N), "has_video": rng.choice([True, False], N),
+            "is_freeship": rng.choice([True, False], N)
         })
 
     if "discount_percent" in df.columns:
-        bins = [-1, 0, 10, 30, 50, 70, 101]
-        labels = ["0%", "1–10%", "11–30%", "31–50%", "51–70%", ">70%"]
-        df["discount_bucket"] = pd.cut(df["discount_percent"].fillna(0), bins=bins, labels=labels)
-    else:
-        df["discount_bucket"] = "0%"
-
-    numeric_cols = ["price_current", "price_original", "sold_count", "rating", "review_count", "image_count", "review_with_image_count", "five_star_with_image_count", "discount_percent", "promotion_label_count", "shipping_fee", "shop_rating", "follower_count", "response_rate"]
-    for col in numeric_cols:
-        if col in df.columns: df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    bool_cols = ["has_video", "is_mall", "is_freeship", "price_ends_with_9", "has_freeship_xtra_label", "has_coinback_label", "has_voucher_label"]
-    for col in bool_cols:
+        df["discount_bucket"] = pd.cut(df["discount_percent"].fillna(0), bins=[-1, 0, 10, 30, 50, 70, 101], labels=["0%", "1–10%", "11–30%", "31–50%", "51–70%", ">70%"])
+    df["revenue_est"] = df.get("price_current", 0) * df.get("sold_count", 0).fillna(0)
+    for col in ["has_video", "is_mall", "is_freeship"]:
         if col in df.columns: df[col] = normalize_bool(df[col])
+    return df
 
-    if "crawled_at" in df.columns: df["crawl_dt"] = pd.to_datetime(df["crawled_at"], errors="coerce")
-    if "price_original" not in df.columns and "price_current" in df.columns:
-        df["price_original"] = df["price_current"] / (1 - df["discount_percent"].fillna(0)/100 + 1e-9)
-    if "revenue_est" not in df.columns and "price_current" in df.columns:
-        df["revenue_est"] = df["price_current"] * df["sold_count"].fillna(0)
-
-    return df, source_name
-
-df_raw, source_name = load_data()
+df_raw = load_data()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  SIDEBAR
+#  3. SIDEBAR & BỘ LỌC
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with st.sidebar:
-    st.markdown("""
-    <div class="sb-brand">
-      <div class="sb-logo">◈ TIKI <span>ANALYTICS</span></div>
-      <div class="sb-sub">Analytics Platform · v2.0</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="sb-brand"><div class="sb-logo">◈ TIKI <span>ANALYTICS</span></div><div class="sb-sub">Analytics Platform · v2.0</div></div>', unsafe_allow_html=True)
     st.divider()
 
-    st.markdown("### BỘ LỌC DỮ LIỆU")
+    st.markdown("###  BỘ LỌC DỮ LIỆU")
     all_cats = sorted(df_raw["category_name"].dropna().unique())
-    with st.popover("CHỌN DANH MỤC"):
+    with st.popover(" CHỌN DANH MỤC"):
         select_all = st.toggle("Chọn tất cả", value=True)
         sel_cats = [cat for cat in all_cats if st.checkbox(cat, value=select_all, key=f"sb_{cat}")]
     
@@ -109,109 +204,112 @@ with st.sidebar:
     disc_min = st.slider("Discount tối thiểu (%)", 0, 100, 0)
     rat_min  = st.slider("Rating tối thiểu", 0.0, 5.0, 0.0, 0.1)
     
-    with st.popover("CHỌN LOẠI VẬN CHUYỂN"):
+    with st.popover(" VẬN CHUYỂN"):
         ship_opt = st.radio("Trạng thái Freeship:", options=["Tất cả", "Có freeship", "Không freeship"], index=0, key="ship_radio")
 
     st.markdown('<div style="flex-grow: 1;"></div>', unsafe_allow_html=True) 
     st.divider()
-    st.markdown("""
-    <div style="text-align: center; font-size: 0.75rem; color: var(--t3); padding: 5px 0;">
-        <div style="font-weight: 700; color: var(--t2); margin-bottom: 5px;">DEVELOPED BY TEAM 13</div>
-        Tuan • Thinh • The Anh • Y • Duong
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center; font-size:0.75rem; color:var(--t3); padding:5px 0;"><div style="font-weight:700; color:var(--t2); margin-bottom:5px;">DEVELOPED BY TEAM 13</div>Tuan • Thinh • The Anh • Y • Duong</div>', unsafe_allow_html=True)
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  FILTER & HEADER TOP BAR
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Lọc dữ liệu
 df = df_raw.copy()
 if sel_cats: df = df[df["category_name"].isin(sel_cats)]
 else: df = df.iloc[0:0]
-
 df = df[(df["price_current"] >= price_r[0]) & (df["price_current"] <= price_r[1])]
 df = df[df["discount_percent"].fillna(0) >= disc_min]
 df = df[df["rating"].fillna(0) >= rat_min]
-
 if ship_opt == "Có freeship": df = df[df["is_freeship"] == True]
 elif ship_opt == "Không freeship": df = df[df["is_freeship"] == False]
 
-N = len(df)
-pct = N / max(1, len(df_raw)) * 100
+N = len(df); pct = N / max(1, len(df_raw)) * 100
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  4. HEADER & THEME LOGIC
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 h_left, h_right = st.columns([5, 1])
-
 with h_right:
     theme_choice = st.selectbox("🎨 GIAO DIỆN", ["Sáng", "Tối", "Mù màu", "Hệ thống"], index=0, key="theme_mode")
-
-    # Xử lý Logic màu sắc 
     if theme_choice == "Sáng":
-        # Chế độ Sáng: Trắng tinh khiết, độ tương phản cao
         c = {"void": "#FFFFFF", "surf": "#F8FAFC", "t1": "#0F172A", "t2": "#334155", "t3": "#64748B", "acc": "#0062FF", "rail": "rgba(0,0,0,0.05)"}
     elif theme_choice == "Tối":
-        # Chế độ Tối: Xanh đen sâu, chữ trắng sáng
         c = {"void": "#0B0F19", "surf": "#141B2D", "t1": "#FFFFFF", "t2": "#F8FAFC", "t3": "#CBD5E1", "acc": "#FF5F1F", "rail": "rgba(255,255,255,0.15)"}
-    elif theme_choice == "Mù màu":
-        c = {"void": "#F0F0F0", "surf": "#FFFFFF", "t1": "#000000", "t2": "#333333", "t3": "#555555", "acc": "#0072B2", "rail": "rgba(0,0,0,0.15)"}
-    else: # Chế độ Hệ thống: Màu xám nhẹ (Soft Mode), dịu mắt hơn chế độ Sáng
-        c = {"void": "#F1F5F9", "surf": "#FFFFFF", "t1": "#1E293B", "t2": "#475569", "t3": "#94A3B8", "acc": "#0F172A", "rail": "rgba(0,0,0,0.08)"}
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    :root {{ 
-        --f-body: 'Inter', -apple-system, sans-serif; --r-lg: 12px;
-        --void: {c['void']}; --surface: {c['surf']}; 
-        --t1: {c['t1']}; --t2: {c['t2']}; --t3: {c['t3']}; 
-        --neon: {c['acc']}; --rail: {c['rail']}; 
-    }} 
-    html, body, [class*="css"] {{ font-family: var(--f-body) !important; color: var(--t1) !important; }}
-    [data-testid="stAppViewContainer"] {{ background-color: var(--void) !important; }}
-    header[data-testid="stHeader"] {{ background: rgba(0,0,0,0) !important; visibility: visible !important; }}
-    #MainMenu, footer {{ visibility: hidden; }}
-    [data-testid="stSidebar"] {{ background: var(--surface) !important; border-right: 1px solid var(--rail) !important; }}
-    .sb-brand {{ padding: 0.5rem 0 1rem; text-align: center; }}
-    .sb-logo {{ font-size: 1.6rem; font-weight: 800; color: var(--t1); }}
-    .sb-logo span {{ color: var(--neon); }}
-    .sb-sub {{ font-size: 0.6rem; color: var(--t3); letter-spacing: 0.1em; text-transform: uppercase; }}
-    div[data-testid="stPopover"] > button {{ width: 100% !important; border-radius: 8px !important; border: 1px solid var(--rail) !important; background-color: var(--surface) !important; color: var(--t1) !important; text-align: left !important; font-family: 'Inter', sans-serif !important; padding: 10px 15px !important; }}
-    div[data-testid="stPopover"] > button:hover {{ border-color: var(--neon) !important; background-color: var(--surface) !important; }}
-    div[data-testid="stSelectbox"] input {{ pointer-events: none; }}
-    .site-header {{ padding: 1.5rem 0; border-bottom: 1px solid var(--rail); margin-bottom: 2rem; }}
-    .kpi-grid {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--rail); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 2rem; }}
-    .kpi-cell {{ background: var(--surface); padding: 1.2rem; text-align: center; border: 1px solid var(--rail); }}
-    .kpi-num {{ font-size: 1.6rem; font-weight: 800; color: var(--t1); }}
-    .kpi-num.hot {{ color: var(--neon); }}
 
-    [data-testid="stVerticalBlockBorderWrapper"] {{
-        background-color: var(--surface) !important;
-        border: 1px solid var(--rail) !important;
-        border-radius: var(--r-lg) !important;
-        padding: 1.5rem !important; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+    elif theme_choice == "Mù màu":
+        # ─────────────────────────────────────────────────────────────────────
+        # COLORBLIND (CVD) THEME — theo The Big Book of Dashboards (Ch.1 & Ch.33)
+        #
+        # Nguyên tắc áp dụng:
+        #  1. Nền trắng thuần (#FFFFFF) + chữ đen tuyệt đối (#000000) →
+        #     contrast tối đa (sáng vs tối) để người CVD phân biệt qua độ sáng.
+        #  2. Accent dùng #0072B2 (blue đậm) — blue là màu an toàn nhất với mọi
+        #     dạng CVD (protanopia, deuteranopia, tritanopia).
+        #  3. Border/rail đậm hơn (#B0B8C1) thay vì transparent, giúp phân tách
+        #     vùng không phụ thuộc màu sắc.
+        #  4. Text t2/t3 giữ contrast cao (#1A2634 / #4A5568) tránh xám nhạt.
+        # ─────────────────────────────────────────────────────────────────────
+        c = {
+            "void": "#FFFFFF",      # Nền trắng tinh: tối đa contrast sáng/tối
+            "surf": "#F0F4F8",      # Surface xám nhạt lạnh: phân tách vùng không cần màu
+            "t1":   "#000000",      # Chữ chính đen tuyệt đối: đọc được với mọi dạng CVD
+            "t2":   "#1A2634",      # Chữ phụ xanh đen: contrast cao, không lẫn với acc
+            "t3":   "#4A5568",      # Chữ mờ xám trung tính: không dùng nâu/đỏ/xanh lá
+            "acc":  "#0072B2",      # Accent BLUE: màu CVD-safe số 1 theo sách (Ch.1, Ch.33)
+            "rail": "#B0B8C1",      # Đường kẻ đậm hơn: dùng độ sáng thay màu sắc
+        }
+
+    else: 
+        c = {"void": "#F1F5F9", "surf": "#FFFFFF", "t1": "#1E293B", "t2": "#475569", "t3": "#94A3B8", "acc": "#0F172A", "rail": "rgba(0,0,0,0.08)"}
+    
+    # Kích hoạt CSS
+    inject_custom_css(c)
 
 with h_left:
     st.markdown(f"""
-    <div class="site-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-      <div>
-        <div style="font-size: 0.75rem; color: var(--t3); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 5px;">◈ E-COMMERCE INTELLIGENCE · LAB 01 · HCMUS</div>
-        <div style="font-size: 2.4rem; font-weight: 800; color: var(--t1); line-height: 1;">TIKI <em style="color:var(--neon); font-style:normal;">ANALYTICS</em></div>
-      </div>
+    <div class="site-header" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+        <div style="font-size:0.75rem; color:var(--t3); font-weight:700; letter-spacing:0.05em; margin-bottom:5px;">◈ E-COMMERCE INTELLIGENCE · LAB 01 · HCMUS</div>
+        <div style="font-size:2.4rem; font-weight:800; color:var(--t1); line-height:1;">TIKI <em style="color:var(--neon); font-style:normal;">ANALYTICS</em></div>
     </div>
     """, unsafe_allow_html=True)
-
 st.markdown('<div style="border-bottom: 1px solid var(--rail); margin: 15px 0 25px 0;"></div>', unsafe_allow_html=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  PLOTLY ENGINE
+#  5. PLOTLY ENGINE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-C   = ["#0062FF", "#FF5F1F", "#2DDBB4", "#FF4E6A", "#E8B86D"]
+if theme_choice == "Mù màu":
+    # ─────────────────────────────────────────────────────────────────────────
+    # COLORBLIND PALETTE — theo The Big Book of Dashboards (Ch.1 & Ch.33)
+    #
+    # Palette gốc từ sách (Wong 2011, được Tableau/Stone khuyên dùng):
+    #   Blue #0072B2, Orange #E69F00, Sky Blue #56B4E9, Vermillion #D55E00,
+    #   Bluish Green #009E73 → thay thành #44AA99 (thêm blue vào green → Ch.33),
+    #   Yellow #F0E442, Black #000000
+    #
+    # Đã LOẠI BỎ so với code cũ:
+    #   ✗ #CC79A7 (pink/magenta) → người deuteranopia dễ nhầm với blue/tím
+    #   ✗ #009E73 (pure green)   → người protanopia thấy như nâu, nhầm với đỏ
+    #
+    # Thứ tự ưu tiên: Blue → Orange → Sky Blue → Vermillion → Bluish Green
+    # (sáng → tối xen kẽ để contrast theo light/dark như sách khuyên Ch.33)
+    # ─────────────────────────────────────────────────────────────────────────
+    C = [
+        "#0072B2",  # 1. Blue đậm       — CVD-safe anchor, sách khuyên làm màu chủ đạo
+        "#E69F00",  # 2. Orange         — "blue/orange is CVD-friendly" (Ch.1, Ch.21, Ch.33)
+        "#56B4E9",  # 3. Sky Blue nhạt  — contrast với Blue đậm, phân tách bằng độ sáng
+        "#D55E00",  # 4. Vermillion     — đỏ-cam đậm, safe hơn pure red, không nhầm với green
+        "#44AA99",  # 5. Bluish Green   — "leverage blue in the green color" (Ch.33), không phải pure green
+        "#F0E442",  # 6. Yellow         — contrast cao trên nền trắng/tối
+        "#000000",  # 7. Black          — đảm bảo phân biệt khi màu hội tụ
+    ]
+elif theme_choice == "Tối":
+    C = ["#60A5FA", "#F97316", "#34D399", "#F472B6", "#FACC15"]
+else:
+    C = ["#0062FF", "#FF5F1F", "#2DDBB4", "#FF4E6A", "#E8B86D"]
 FULL_BAR = dict(displayModeBar=True, scrollZoom=True)
 
-def fig_layout(height=360, x_title=None, y_title=None, x_log=False, y_log=False, horizontal_legend=False, margin=None):
-    txt_color = c["t1"] if "c" in globals() else "#0F172A"
-    grid_color = c["rail"] if "c" in globals() else "rgba(0,0,0,0.08)"
+def fig_layout(height=400, x_title=None, y_title=None, x_log=False, y_log=False, horizontal_legend=False, margin=None):
+    txt_color = c["t1"]
+    grid_color = c["rail"]
+    
     _AX = dict(gridcolor=grid_color, zeroline=False, tickfont=dict(size=10, family="Inter", color=txt_color))
     layout = dict(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor ="rgba(0,0,0,0)",
@@ -233,20 +331,106 @@ if not hasattr(st, "_original_plotly_chart"):
 
 def accessible_plotly_chart(fig, **kwargs):
     current_theme = st.session_state.get("theme_mode", "Sáng")
-    if current_theme == "Mù màu":
+    if current_theme == "Tối":
+        fig.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color=c["t1"]),
+            colorway=C,
+            legend=dict(bgcolor="rgba(0,0,0,0)", bordercolor=c["rail"], borderwidth=1),
+        )
+    elif current_theme == "Mù màu":
+        # ─────────────────────────────────────────────────────────────────────
+        # CVD CHART RENDERING — theo Big Book of Dashboards (Ch.1, Ch.33)
+        #
+        # Các kỹ thuật áp dụng:
+        #  • template="plotly_white": nền trắng → contrast tối đa (light vs dark)
+        #  • colorway=C: dùng palette CVD-safe đã định nghĩa ở trên
+        #  • colorscale="Cividis": thang màu perceptually-uniform, CVD-safe, 
+        #    đi từ xanh dương nhạt → vàng (tránh red-green gradient)
+        #  • Patterns trên bar/histogram: thêm texture (/, \, x, -, |, +, .)
+        #    → "offer alternate methods of distinguishing data" (Ch.33)
+        #    → người CVD phân biệt series bằng hình dạng, không chỉ màu sắc
+        #  • line.width=2.0: đường kẻ đậm hơn để dễ theo dõi
+        #  • marker.size=8 & line trên scatter: dễ thấy điểm dữ liệu hơn
+        # ─────────────────────────────────────────────────────────────────────
+        fig.update_layout(
+            template="plotly_white",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#000000"),     # Chữ đen tuyệt đối
+            colorway=C,
+            coloraxis=dict(colorscale="Cividis"),   # Thang màu CVD-safe (không red-green)
+            legend=dict(
+                bgcolor="rgba(255,255,255,0.95)",   # Nền legend trắng đục để dễ đọc
+                bordercolor="#B0B8C1",
+                borderwidth=1.5,
+            ),
+        )
+        # Pattern shapes xen kẽ để phân biệt series không dựa vào màu
         patterns = ["/", "\\", "x", "-", "|", "+", "."]
         for i, trace in enumerate(fig.data):
-            if getattr(trace, "type", "") in ['bar', 'histogram', 'pie']:
+            color = C[i % len(C)]
+            if getattr(trace, "type", "") in ["bar", "histogram"]:
                 trace.update(marker=dict(
-                    pattern=dict(shape=patterns[i % len(patterns)], fillmode="overlay", fgcolor="rgba(0,0,0,0.6)"),
-                    line=dict(width=1.5, color="#111827")
+                    color=color,
+                    pattern=dict(
+                        shape=patterns[i % len(patterns)],
+                        fillmode="overlay",
+                        fgcolor="rgba(0,0,0,0.55)",  # Pattern đậm hơn để rõ trên nền trắng
+                        size=6,
+                    ),
+                    line=dict(width=1.5, color="#000000")  # Viền đen rõ từng cột
                 ))
+            if getattr(trace, "type", "") in ["heatmap", "histogram2d"]:
+                # Dùng Cividis: blue→yellow, không có red-green transition
+                trace.update(colorscale="Cividis")
+            if getattr(trace, "type", "") == "scatter":
+                trace.update(
+                    marker=dict(
+                        color=color,
+                        size=8,                             # Điểm to hơn dễ thấy
+                        symbol=["circle", "square", "diamond", "cross", "x",
+                                "triangle-up", "triangle-down"][i % 7],  # Shape khác nhau
+                        line=dict(width=1.5, color="#000000")
+                    ),
+                    line=dict(color=color, width=2.0)       # Đường dày hơn
+                )
+            if getattr(trace, "type", "") == "box":
+                trace.update(
+                    marker=dict(color=color, size=5),
+                    line=dict(color="#000000", width=1.5),  # Viền đen rõ
+                    fillcolor=color
+                )
+            if getattr(trace, "type", "") == "pie":
+                value_len = len(trace.values) if getattr(trace, "values", None) is not None else 0
+                if value_len:
+                    trace.update(
+                        marker=dict(
+                            colors=[C[j % len(C)] for j in range(value_len)],
+                            line=dict(color="#000000", width=2),  # Viền đen giữa lát cắt
+                        ),
+                        textinfo="label+percent",  # Luôn hiện nhãn + % không phụ thuộc màu
+                    )
+    else:
+        fig.update_layout(
+            template="plotly_white",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color=c["t1"]),
+            colorway=C,
+            legend=dict(bgcolor="rgba(255,255,255,0.65)", bordercolor=c["rail"], borderwidth=1),
+        )
+
+    if "theme" not in kwargs:
+        kwargs["theme"] = None
     st._original_plotly_chart(fig, **kwargs)
 
 st.plotly_chart = accessible_plotly_chart
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  TABS
+#  6. TABS CONTENT
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 T1, T2, T3, T4, T5, T6 = st.tabs([
     "01 — TỔNG QUAN", 
@@ -323,15 +507,23 @@ with T2:
             c1, c2 = st.columns(2)
             with c1:
                 with st.container(border=True):
-                    fig_score = px.scatter(mall_df, x="display_quality_score", y="sold_count", color=mall_df["has_video_num"].map({1: "Có video", 0: "Không video"}), color_discrete_sequence=["#0062FF", "#FF5F1F"], labels={"display_quality_score": "Điểm trưng bày", "sold_count": "Lượt bán", "color": "Trạng thái"})
-                    fig_score.update_layout(**fig_layout(height=420, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Điểm trưng bày và lượt bán</b>", font=dict(size=14)))
+                    # CVD-NOTE: Dùng Blue (#0072B2) vs Orange (#E69F00) — combo CVD-safe nhất (Ch.1, Ch.33)
+                    # Thay vì Blue vs Orange-red (#FF5F1F) cũ → Vermillion (#D55E00) an toàn hơn
+                    fig_score = px.scatter(mall_df, x="display_quality_score", y="sold_count",
+                                           color=mall_df["has_video_num"].map({1: "Có video", 0: "Không video"}),
+                                           color_discrete_sequence=[C[0], C[1]],   # Blue, Orange
+                                           labels={"display_quality_score": "Điểm trưng bày", "sold_count": "Lượt bán", "color": "Trạng thái"})
+                    fig_score.update_layout(**fig_layout(height=420, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Điểm trưng bày và lượt bán</b>", font=dict(size=14)))
                     st.plotly_chart(fig_score, use_container_width=True, config=FULL_BAR)
 
             with c2:
                 with st.container(border=True):
                     mall_df["image_bucket"] = pd.cut(mall_df["image_count"], bins=[-1, 3, 6, 9, 99], labels=["0-3", "4-6", "7-9", "10+"])
                     sold_by_bucket = mall_df.groupby("image_bucket", observed=False, as_index=False)["sold_count"].mean()
-                    fig_bucket = px.bar(sold_by_bucket, x="image_bucket", y="sold_count", color_discrete_sequence=["#2DDBB4"], labels={"image_bucket": "Nhóm số ảnh", "sold_count": "Lượt bán TB"})
+                    # CVD-NOTE: Dùng Sky Blue (#56B4E9) thay vì Teal (#2DDBB4) — Blue family CVD-safe
+                    fig_bucket = px.bar(sold_by_bucket, x="image_bucket", y="sold_count",
+                                        color_discrete_sequence=[C[2]],   # Sky Blue
+                                        labels={"image_bucket": "Nhóm số ảnh", "sold_count": "Lượt bán TB"})
                     fig_bucket.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Lượt bán TB theo nhóm số ảnh</b>", font=dict(size=14)))
                     st.plotly_chart(fig_bucket, use_container_width=True, config=FULL_BAR)
 
@@ -356,13 +548,22 @@ with T2:
             g1, g2 = st.columns(2)
             with g1:
                 with st.container(border=True):
-                    fig_band = px.bar(band_stats.sort_values("avg_sold", ascending=False), x="discount_band", y="avg_sold", color="sample_size", color_continuous_scale="Blues", labels={"discount_band": "Dải discount", "avg_sold": "Lượt bán TB", "sample_size": "Mẫu"})
+                    # CVD-NOTE: color_continuous_scale="Blues" → thay bằng "Cividis"
+                    # Blues dùng blue→white có thể mất contrast; Cividis perceptually-uniform & CVD-safe
+                    fig_band = px.bar(band_stats.sort_values("avg_sold", ascending=False),
+                                      x="discount_band", y="avg_sold",
+                                      color="sample_size",
+                                      color_continuous_scale="Cividis",    # CVD-safe thay Blues
+                                      labels={"discount_band": "Dải discount", "avg_sold": "Lượt bán TB", "sample_size": "Mẫu"})
                     fig_band.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Lượt bán TB theo dải discount</b>", font=dict(size=14)))
                     st.plotly_chart(fig_band, use_container_width=True, config=FULL_BAR)
 
             with g2:
                 with st.container(border=True):
-                    fig_box = px.box(promo_df, x="discount_band", y="sold_count", color_discrete_sequence=["#FF4E6A"], labels={"discount_band": "Dải discount", "sold_count": "Lượt bán"})
+                    # CVD-NOTE: Thay #FF4E6A (đỏ hồng) → Vermillion #D55E00 (đỏ-cam, CVD-safe)
+                    fig_box = px.box(promo_df, x="discount_band", y="sold_count",
+                                     color_discrete_sequence=[C[3]],    # Vermillion
+                                     labels={"discount_band": "Dải discount", "sold_count": "Lượt bán"})
                     fig_box.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Phân bố lượt bán thực tế (Log Scale)</b>", font=dict(size=14)))
                     fig_box.update_yaxes(type="log")
                     st.plotly_chart(fig_box, use_container_width=True, config=FULL_BAR)
@@ -394,7 +595,7 @@ with T3:
     """, unsafe_allow_html=True)
 
     req_price = ["price_current", "sold_count"]
-    if all(c in df.columns for c in req_price):
+    if all(col in df.columns for col in req_price):
         price_df = df.dropna(subset=req_price).copy()
         price_df = price_df[(price_df["price_current"] > 0) & (price_df["sold_count"] > 0)]
         color_col = "price_bucket" if "price_bucket" in price_df.columns else None
@@ -402,7 +603,11 @@ with T3:
         c1, c2 = st.columns(2)
         with c1:
             with st.container(border=True):
-                fig_scatter = px.scatter(price_df, x="price_current", y="sold_count", color=color_col, log_x=True, log_y=True, opacity=0.6, color_discrete_sequence=["#0062FF", "#FF5F1F", "#2DDBB4", "#FF4E6A", "#E8B86D"], labels={"price_current": "Giá (VND)", "sold_count": "Lượt bán", "price_bucket": "Phân khúc"})
+                # CVD-NOTE: Palette C đã là CVD-safe; bỏ #FF4E6A (đỏ hồng) → dùng C array
+                fig_scatter = px.scatter(price_df, x="price_current", y="sold_count",
+                                          color=color_col, log_x=True, log_y=True, opacity=0.6,
+                                          color_discrete_sequence=C,
+                                          labels={"price_current": "Giá (VND)", "sold_count": "Lượt bán", "price_bucket": "Phân khúc"})
                 fig_scatter.update_layout(**fig_layout(height=450, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Giá vs Lượt bán (Log-Log Scale)</b>", font=dict(size=14)))
                 st.plotly_chart(fig_scatter, use_container_width=True, config=FULL_BAR)
 
@@ -415,8 +620,10 @@ with T3:
                     bin_df["price_bin"] = bin_df["price_bin"].astype(str)
 
                     fig_mix = make_subplots(specs=[[{"secondary_y": True}]])
-                    fig_mix.add_trace(go.Bar(x=bin_df["price_bin"], y=bin_df["revenue"]/1e9, name="Doanh thu (Tỷ)", marker_color="#0062FF"), secondary_y=False)
-                    fig_mix.add_trace(go.Scatter(x=bin_df["price_bin"], y=bin_df["avg_sold"], mode="lines+markers", name="Lượt bán TB", line=dict(color="#FF5F1F", width=3)), secondary_y=True)
+                    # CVD-NOTE: Blue (#0072B2) cho Bar, Orange (#E69F00) cho Line
+                    # → Blue/Orange là "most common CVD-friendly combination" (Ch.33)
+                    fig_mix.add_trace(go.Bar(x=bin_df["price_bin"], y=bin_df["revenue"]/1e9, name="Doanh thu (Tỷ)", marker_color=C[0]), secondary_y=False)
+                    fig_mix.add_trace(go.Scatter(x=bin_df["price_bin"], y=bin_df["avg_sold"], mode="lines+markers", name="Lượt bán TB", line=dict(color=C[1], width=3)), secondary_y=True)
                     
                     fig_mix.update_layout(**fig_layout(height=450, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Doanh thu & Lượt bán theo khoảng giá</b>", font=dict(size=14)))
                     fig_mix.update_yaxes(title_text="Doanh thu (Tỷ)", gridcolor="rgba(128,128,128,0.1)", secondary_y=False)
@@ -428,7 +635,7 @@ with T3:
 
     st.markdown('<div style="margin: 2.5rem 0 1.5rem 0;"><h3 style="color: var(--t1); font-weight: 700; font-size: 1.4rem;">◈ TÁC ĐỘNG CỦA RATING & REVIEW</h3></div>', unsafe_allow_html=True)
     req_rtg = ["price_current", "rating", "review_count", "sold_count"]
-    if all(c in df.columns for c in req_rtg):
+    if all(col in df.columns for col in req_rtg):
         d = df.dropna(subset=req_rtg).copy()
         
         c3, c4 = st.columns([1, 1.3])
@@ -436,7 +643,12 @@ with T3:
             with st.container(border=True):
                 corr_df = d[req_rtg].corr(method="spearman")
                 corr_df.columns = ["Giá", "Rating", "Review", "Lượt bán"]; corr_df.index = ["Giá", "Rating", "Review", "Lượt bán"]
-                fig_corr = px.imshow(corr_df, text_auto=".2f", aspect="auto", color_continuous_scale="RdBu_r", color_continuous_midpoint=0)
+                # CVD-NOTE: Thay "RdBu_r" → "RdYlBu" hoặc "PuOr"
+                # RdBu dùng Red-Blue: Red bị nhầm với Green ở người protanopia
+                # PuOr (Purple-Orange) hoặc RdYlBu (đỏ→vàng→xanh) tốt hơn cho CVD heatmap tương quan
+                fig_corr = px.imshow(corr_df, text_auto=".2f", aspect="auto",
+                                     color_continuous_scale="PuOr",     # Tím-Cam: CVD-safe diverging
+                                     color_continuous_midpoint=0)
                 fig_corr.update_layout(**fig_layout(height=400, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Ma trận tương quan Spearman</b>", font=dict(size=14)))
                 st.plotly_chart(fig_corr, use_container_width=True, config=FULL_BAR)
 
@@ -445,7 +657,11 @@ with T3:
                 d2 = d[(d["rating"] >= 0) & (d["rating"] <= 5)].copy()
                 d2["rating_group"] = d2["rating"].round(1).astype(str)
                 d2 = d2.sort_values("rating_group")
-                fig_box = px.box(d2, x="rating_group", y="sold_count", color_discrete_sequence=["#2DDBB4"], labels={"rating_group": "Mức Rating", "sold_count": "Lượt bán"})
+                # CVD-NOTE: Thay Teal #2DDBB4 → Bluish Green #44AA99 (C[4])
+                # #2DDBB4 là pure teal/green → có thể nhầm với đỏ; #44AA99 có thêm blue (Ch.33)
+                fig_box = px.box(d2, x="rating_group", y="sold_count",
+                                 color_discrete_sequence=[C[4]],    # Bluish Green
+                                 labels={"rating_group": "Mức Rating", "sold_count": "Lượt bán"})
                 fig_box.update_layout(**fig_layout(height=400, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Phân phối lượt bán theo nhóm Rating</b>", font=dict(size=14)))
                 fig_box.update_yaxes(type="log")
                 st.plotly_chart(fig_box, use_container_width=True, config=FULL_BAR)
@@ -461,7 +677,11 @@ with T3:
             pivot = d3.pivot_table(values="sold_count", index="rating_segment", columns="review_segment", aggfunc="mean", observed=False)
             
             if not pivot.empty:
-                fig_heat = px.imshow(pivot, text_auto=".0f", aspect="auto", color_continuous_scale="Blues", labels=dict(x="Lượng Review", y="Mức Rating", color="Lượt bán TB"))
+                # CVD-NOTE: Thay "Blues" → "Cividis"
+                # Blues: blue→white → mất contrast ở giá trị cao; Cividis: perceptually-uniform & CVD-safe
+                fig_heat = px.imshow(pivot, text_auto=".0f", aspect="auto",
+                                     color_continuous_scale="Cividis",   # CVD-safe thay Blues
+                                     labels=dict(x="Lượng Review", y="Mức Rating", color="Lượt bán TB"))
                 fig_heat.update_layout(**fig_layout(height=450, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Hiệu ứng kết hợp: Rating × Khối lượng Review</b>", font=dict(size=14)))
                 st.plotly_chart(fig_heat, use_container_width=True, config=FULL_BAR)
 
@@ -477,7 +697,6 @@ with T4:
     category_col = "category_name"
     n_cats = df[category_col].nunique() if category_col in df.columns else 0
     n_buckets = df['price_bucket'].astype(str).nunique() if "price_bucket" in df.columns else 0
-    
     disc_ratio = (df["discount_percent"].fillna(0) > 0).mean() * 100 if "discount_percent" in df.columns else 0
     
     lift_text = "N/A"
@@ -507,14 +726,21 @@ with T4:
         c1, c2 = st.columns(2)
         with c1:
             with st.container(border=True):
-                fig_bar = px.bar(agg, x=category_col, y="sold_count", color="price_bucket", barmode="group", color_discrete_sequence=["#0062FF", "#2DDBB4", "#FF5F1F", "#E8B86D", "#A78BFA"], labels={category_col: "Danh mục", "sold_count": "Lượt bán TB", "price_bucket": "Phân khúc"})
+                # CVD-NOTE: Dùng C array (đã loại green thuần, pink/magenta)
+                # Thứ tự: Blue, Orange, Sky Blue, Vermillion, Bluish Green
+                fig_bar = px.bar(agg, x=category_col, y="sold_count", color="price_bucket", barmode="group",
+                                 color_discrete_sequence=C,
+                                 labels={category_col: "Danh mục", "sold_count": "Lượt bán TB", "price_bucket": "Phân khúc"})
                 fig_bar.update_layout(**fig_layout(height=450, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Lượt bán TB theo danh mục và phân khúc giá</b>", font=dict(size=14)), xaxis_tickangle=-40)
                 st.plotly_chart(fig_bar, use_container_width=True, config=FULL_BAR)
 
         with c2:
             with st.container(border=True):
                 heat = agg.pivot(index=category_col, columns="price_bucket", values="sold_count")
-                fig_heat = px.imshow(heat, text_auto=".0f", aspect="auto", color_continuous_scale="Blues", labels=dict(x="Phân khúc giá", y="Danh mục", color="Lượt bán TB"))
+                # CVD-NOTE: Thay "Blues" → "Cividis" — CVD-safe sequential colorscale
+                fig_heat = px.imshow(heat, text_auto=".0f", aspect="auto",
+                                     color_continuous_scale="Cividis",
+                                     labels=dict(x="Phân khúc giá", y="Danh mục", color="Lượt bán TB"))
                 fig_heat.update_layout(**fig_layout(height=450, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Heatmap lượt bán TB theo phân khúc</b>", font=dict(size=14)))
                 st.plotly_chart(fig_heat, use_container_width=True, config=FULL_BAR)
 
@@ -533,15 +759,24 @@ with T4:
         d1, d2 = st.columns(2)
         with d1:
             with st.container(border=True):
+                # CVD-NOTE: Thay Orange (#FF5F1F) + Blue (#0062FF)
+                # → Vermillion (#D55E00) + Blue (#0072B2): đúng tone CVD-safe
+                # "blue/orange or blue/red would work" (Ch.33)
                 discount_mean = y2.groupby("Trang_Thai_Giam_Gia", as_index=False)["sold_count"].mean()
-                fig_bar2 = px.bar(discount_mean, x="Trang_Thai_Giam_Gia", y="sold_count", color="Trang_Thai_Giam_Gia", color_discrete_sequence=["#FF5F1F", "#0062FF"], text_auto=".1f", labels={"Trang_Thai_Giam_Gia": "Trạng thái", "sold_count": "Lượt bán TB"})
+                fig_bar2 = px.bar(discount_mean, x="Trang_Thai_Giam_Gia", y="sold_count",
+                                  color="Trang_Thai_Giam_Gia",
+                                  color_discrete_map={"Có Giảm Giá": C[3], "Không Giảm Giá": C[0]},  # Vermillion, Blue
+                                  text_auto=".1f",
+                                  labels={"Trang_Thai_Giam_Gia": "Trạng thái", "sold_count": "Lượt bán TB"})
                 fig_bar2.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Lượt bán TB: Có vs Không Giảm Giá</b>", font=dict(size=14)), showlegend=False)
                 st.plotly_chart(fig_bar2, use_container_width=True, config=FULL_BAR)
 
         with d2:
             with st.container(border=True):
                 discount_sum = y2.groupby("Trang_Thai_Giam_Gia", as_index=False)["sold_count"].sum()
-                fig_pie = px.pie(discount_sum, names="Trang_Thai_Giam_Gia", values="sold_count", hole=0.5, color="Trang_Thai_Giam_Gia", color_discrete_map={"Có Giảm Giá": "#FF5F1F", "Không Giảm Giá": "#0062FF"})
+                fig_pie = px.pie(discount_sum, names="Trang_Thai_Giam_Gia", values="sold_count", hole=0.5,
+                                 color="Trang_Thai_Giam_Gia",
+                                 color_discrete_map={"Có Giảm Giá": C[3], "Không Giảm Giá": C[0]})  # Vermillion, Blue
                 fig_pie.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Tỷ trọng Tổng lượt bán thực tế</b>", font=dict(size=14)))
                 st.plotly_chart(fig_pie, use_container_width=True, config=FULL_BAR)
 
@@ -551,7 +786,11 @@ with T4:
                 y2c = y2[y2[category_col].astype(str).isin(top_cats2)]
                 cat_discount = y2c.groupby([category_col, "Trang_Thai_Giam_Gia"], observed=False)["sold_count"].mean().reset_index()
                 
-                fig_cat_disc = px.bar(cat_discount, x=category_col, y="sold_count", color="Trang_Thai_Giam_Gia", barmode="group", color_discrete_map={"Có Giảm Giá": "#FF5F1F", "Không Giảm Giá": "#0062FF"}, text_auto=".0f", labels={category_col: "Danh mục", "sold_count": "Lượt bán TB", "Trang_Thai_Giam_Gia": "Trạng thái"})
+                fig_cat_disc = px.bar(cat_discount, x=category_col, y="sold_count",
+                                      color="Trang_Thai_Giam_Gia", barmode="group",
+                                      color_discrete_map={"Có Giảm Giá": C[3], "Không Giảm Giá": C[0]},
+                                      text_auto=".0f",
+                                      labels={category_col: "Danh mục", "sold_count": "Lượt bán TB", "Trang_Thai_Giam_Gia": "Trạng thái"})
                 fig_cat_disc.update_layout(**fig_layout(height=450, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Lượt bán TB Có/Không giảm giá theo Danh mục</b>", font=dict(size=14)), xaxis_tickangle=-30)
                 st.plotly_chart(fig_cat_disc, use_container_width=True, config=FULL_BAR)
 
@@ -577,7 +816,7 @@ with T5:
     <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
         <div class="kpi-cell"><span class="kpi-tag">Số phân khúc giá</span><div class="kpi-num">{n_buckets}</div></div>
         <div class="kpi-cell"><span class="kpi-tag">Phân khúc phổ biến nhất</span><div class="kpi-num hot" style="font-size:1.4rem;">{top_bucket}</div></div>
-        <div class="kpi-cell"><span class="kpi-tag">Phân khúc DT cao nhất</span><div class="kpi-num" style="color:#FF5F1F; font-size:1.4rem;">{top_rev_bucket}</div></div>
+        <div class="kpi-cell"><span class="kpi-tag">Phân khúc DT cao nhất</span><div class="kpi-num" style="color:#D55E00; font-size:1.4rem;">{top_rev_bucket}</div></div>
         <div class="kpi-cell"><span class="kpi-tag">Rating trung bình</span><div class="kpi-num">{avg_rating:.2f} ⭐</div></div>
     </div>
     """, unsafe_allow_html=True)
@@ -592,13 +831,19 @@ with T5:
             with st.container(border=True):
                 count_df = d.groupby("price_bucket", observed=False, as_index=False)["product_id"].count()
                 count_df.columns = ["price_bucket", "so_luong_sp"]
-                fig_count = px.bar(count_df, x="price_bucket", y="so_luong_sp", text_auto=True, color_discrete_sequence=["#0062FF"], labels={"price_bucket": "Phân khúc giá", "so_luong_sp": "Số lượng SP"})
+                fig_count = px.bar(count_df, x="price_bucket", y="so_luong_sp", text_auto=True,
+                                   color_discrete_sequence=[C[0]],   # Blue
+                                   labels={"price_bucket": "Phân khúc giá", "so_luong_sp": "Số lượng SP"})
                 fig_count.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Phân bố Số lượng SP theo phân khúc giá</b>", font=dict(size=14)))
                 st.plotly_chart(fig_count, use_container_width=True, config=FULL_BAR)
 
         with c2:
             with st.container(border=True):
-                fig_box = px.box(d, x="price_bucket", y="sold_count", color_discrete_sequence=["#FF5F1F"], labels={"price_bucket": "Phân khúc giá", "sold_count": "Lượt bán"})
+                # CVD-NOTE: Thay #FF5F1F (cam-đỏ) → C[1] Orange (#E69F00)
+                # Orange thuần CVD-safe hơn orange-red; vẫn contrast tốt vs Blue
+                fig_box = px.box(d, x="price_bucket", y="sold_count",
+                                 color_discrete_sequence=[C[1]],   # Orange
+                                 labels={"price_bucket": "Phân khúc giá", "sold_count": "Lượt bán"})
                 fig_box.update_layout(**fig_layout(height=420, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Phân phối Lượt bán theo phân khúc (Log Scale)</b>", font=dict(size=14)))
                 fig_box.update_yaxes(type="log")
                 st.plotly_chart(fig_box, use_container_width=True, config=FULL_BAR)
@@ -606,9 +851,10 @@ with T5:
         with st.container(border=True):
             seg = d.groupby("price_bucket", observed=False).agg(revenue=("revenue_est", "sum"), sold_mean=("sold_count", "mean")).reset_index()
             fig_mix = make_subplots(specs=[[{"secondary_y": True}]])
-            fig_mix.add_trace(go.Bar(x=seg["price_bucket"], y=seg["revenue"]/1e9, name="Doanh thu (Tỷ VND)", marker_color="#2DDBB4"), secondary_y=False)
-            fig_mix.add_trace(go.Scatter(x=seg["price_bucket"], y=seg["sold_mean"], mode="lines+markers", name="Lượt bán TB", line=dict(color="#FF4E6A", width=3)), secondary_y=True)
-            fig_mix.update_layout(**fig_layout(height=450, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Doanh thu và Lượt bán TB theo phân khúc</b>", font=dict(size=14)))
+            # CVD-NOTE: Blue Bar + Orange Line = canonical CVD-friendly dual-axis (Ch.21 "Orange/Blue is CVD Friendly")
+            fig_mix.add_trace(go.Bar(x=seg["price_bucket"], y=seg["revenue"]/1e9, name="Doanh thu (Tỷ VND)", marker_color=C[0]), secondary_y=False)
+            fig_mix.add_trace(go.Scatter(x=seg["price_bucket"], y=seg["sold_mean"], mode="lines+markers", name="Lượt bán TB", line=dict(color=C[1], width=3)), secondary_y=True)
+            fig_mix.update_layout(**fig_layout(height=450, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Doanh thu và Lượt bán TB theo phân khúc</b>", font=dict(size=14)))
             fig_mix.update_yaxes(title_text="Doanh thu (Tỷ)", gridcolor="rgba(128,128,128,0.1)", secondary_y=False)
             fig_mix.update_yaxes(title_text="Lượt bán TB", gridcolor="rgba(0,0,0,0)", secondary_y=True)
             st.plotly_chart(fig_mix, use_container_width=True, config=FULL_BAR)
@@ -619,13 +865,22 @@ with T5:
                 d_heat = d.copy()
                 d_heat["rating_group"] = d_heat["rating"].round(1)
                 pivot = d_heat.pivot_table(values="sold_count", index="price_bucket", columns="rating_group", aggfunc="mean", observed=False)
-                fig_heat = px.imshow(pivot, aspect="auto", color_continuous_scale="YlGnBu", text_auto=".0f", labels=dict(x="Mức Rating", y="Phân khúc giá", color="Lượt bán TB"))
+                # CVD-NOTE: Thay "YlGnBu" → "Cividis"
+                # YlGnBu dùng Yellow-Green-Blue; Green component gây vấn đề với protanopia
+                # Cividis (blue→yellow) được thiết kế đặc biệt cho CVD
+                fig_heat = px.imshow(pivot, aspect="auto",
+                                     color_continuous_scale="Cividis",   # CVD-safe
+                                     text_auto=".0f",
+                                     labels=dict(x="Mức Rating", y="Phân khúc giá", color="Lượt bán TB"))
                 fig_heat.update_layout(**fig_layout(height=450, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Heatmap Lượt bán TB theo Phân khúc & Rating</b>", font=dict(size=14)))
                 st.plotly_chart(fig_heat, use_container_width=True, config=FULL_BAR)
             
         with e2:
             with st.container(border=True):
-                fig_scatter = px.scatter(d, x="price_current", y="sold_count", color="price_bucket", log_x=True, log_y=True, opacity=0.6, color_discrete_sequence=["#0062FF", "#FF5F1F", "#2DDBB4", "#FF4E6A", "#E8B86D"], labels={"price_current": "Giá (VND)", "sold_count": "Lượt bán", "price_bucket": "Phân khúc"})
+                fig_scatter = px.scatter(d, x="price_current", y="sold_count",
+                                          color="price_bucket", log_x=True, log_y=True, opacity=0.6,
+                                          color_discrete_sequence=C,
+                                          labels={"price_current": "Giá (VND)", "sold_count": "Lượt bán", "price_bucket": "Phân khúc"})
                 fig_scatter.update_layout(**fig_layout(height=450, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Giá vs Lượt bán theo phân khúc (Log-Log)</b>", font=dict(size=14)))
                 st.plotly_chart(fig_scatter, use_container_width=True, config=FULL_BAR)
 
@@ -654,7 +909,10 @@ with T6:
         trust_series = (df["rating"] * 0.7) + (np.log1p(df["review_count"]) * 0.3)
         trust_text = f"{trust_series.mean():.2f}" if not trust_series.dropna().empty else "N/A"
 
-    delta_color = "#2DDBB4" if delta_val > 0 else "#FF4E6A"
+    # CVD-NOTE: Thay #2DDBB4 (teal/green) → C[4] Bluish Green #44AA99 cho positive
+    # Thay #FF4E6A (đỏ hồng) → C[3] Vermillion #D55E00 cho negative
+    # Tránh red-green pair; dùng blue-family (teal có blue) vs orange-family (vermillion)
+    delta_color = C[4] if delta_val > 0 else C[3]   # Bluish Green vs Vermillion
     st.markdown(f"""
     <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
         <div class="kpi-cell"><span class="kpi-tag">Lượt bán TB (Giá tâm lý)</span><div class="kpi-num hot">{psy_avg_text}</div></div>
@@ -677,7 +935,16 @@ with T6:
         psy_viz["label"] = psy_viz["is_psy_price"].map({True: "Giá có đuôi 9 (Tâm lý)", False: "Giá thông thường"})
 
         with st.container(border=True):
-            fig1 = px.bar(psy_viz.sort_values("sold_count", ascending=False), x="label", y="sold_count", color="label", text_auto=".0f", color_discrete_map={"Giá có đuôi 9 (Tâm lý)": "#0062FF", "Giá thông thường": "#94A3B8"}, labels={"label": "Chiến lược giá", "sold_count": "Lượt bán TB"})
+            # CVD-NOTE: Blue cho "Tâm lý", Sky Blue cho "Thường"
+            # → phân biệt bằng độ đậm nhạt (dark vs light) trong cùng blue family
+            # "light vs dark" là cách phân biệt CVD-safe (Ch.33)
+            fig1 = px.bar(psy_viz.sort_values("sold_count", ascending=False),
+                          x="label", y="sold_count", color="label", text_auto=".0f",
+                          color_discrete_map={
+                              "Giá có đuôi 9 (Tâm lý)": C[0],    # Blue đậm
+                              "Giá thông thường": C[2]             # Sky Blue nhạt
+                          },
+                          labels={"label": "Chiến lược giá", "sold_count": "Lượt bán TB"})
             fig1.update_layout(**fig_layout(height=450, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>So sánh Lượt bán TB: Giá đuôi 9 vs Giá tròn</b>", font=dict(size=14)), showlegend=False)
             st.plotly_chart(fig1, use_container_width=True, config=FULL_BAR)
 
@@ -693,8 +960,14 @@ with T6:
             hover_name = "product_name" if "product_name" in d2.columns else None
             
             with st.container(border=True):
-                fig2 = px.scatter(d2, x="trust_index_score", y="sold_count", size="revenue_est" if "revenue_est" in d2.columns else None, color=color_col, hover_name=hover_name, opacity=0.7, color_discrete_sequence=["#FF5F1F", "#0062FF"], labels={"trust_index_score": "Điểm Trust Index", "sold_count": "Lượt bán", "is_mall": "Loại Gian Hàng", "revenue_est": "Doanh thu"})
-                fig2.update_layout(**fig_layout(height=500, horizontal_legend=True, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Tương quan giữa Trust Index và Lượt bán thực tế</b>", font=dict(size=14)))
+                # CVD-NOTE: Thay [#FF5F1F, #0062FF] → [C[1], C[0]] = [Orange, Blue]
+                # Orange (#E69F00) + Blue (#0072B2) = canonical CVD-safe pair từ Ch.1, Ch.21, Ch.33
+                fig2 = px.scatter(d2, x="trust_index_score", y="sold_count",
+                                   size="revenue_est" if "revenue_est" in d2.columns else None,
+                                   color=color_col, hover_name=hover_name, opacity=0.7,
+                                   color_discrete_sequence=[C[1], C[0]],   # Orange, Blue
+                                   labels={"trust_index_score": "Điểm Trust Index", "sold_count": "Lượt bán", "is_mall": "Loại Gian Hàng", "revenue_est": "Doanh thu"})
+                fig2.update_layout(**fig_layout(height=500, horizontal_legend=False, margin=dict(t=50, l=10, r=10, b=10)), title=dict(text="<b>Tương quan giữa Trust Index và Lượt bán thực tế</b>", font=dict(size=14)))
                 fig2.update_yaxes(type="log")
                 st.plotly_chart(fig2, use_container_width=True, config=FULL_BAR)
 
