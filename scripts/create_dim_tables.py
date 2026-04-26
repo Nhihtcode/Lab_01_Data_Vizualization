@@ -46,11 +46,9 @@ print(f"\n[OK] Saved -> {platform_path}")
 print("\n\n[2] Tao DIM_CATEGORY")
 print("-" * 70)
 
-# Extract unique categories with their metadata
 categories_data = merged_df[["category_id", "platform_id", "crawled_by"]].drop_duplicates()
 print(f"\nUnique categories in data: {categories_data['category_id'].nunique()}")
 
-# Map category names based on crawled_by
 category_mapping = {
     "tiki_1883": ("Nha Cua & Doi Song", 1),
     "tiki_1882": ("Dien Gia Dung", 1),
@@ -136,7 +134,6 @@ if dim_shop is None or dim_shop.empty:
     })
     print(f"[OK] Rut trich {len(dim_shop)} shops tu fact_product")
 else:
-    # Ensure all required columns exist
     required_cols = [
         "shop_id", "platform_id", "shop_name", "shop_type", "is_mall",
         "shop_rating", "follower_count", "response_rate", "response_time_hours",

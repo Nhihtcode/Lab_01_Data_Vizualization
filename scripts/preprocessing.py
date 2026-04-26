@@ -6,14 +6,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 def load_and_merge_data(data_path):
-    """Đọc dữ liệu từ file csv."""
     return pd.read_csv(data_path)
 
 def clean_data(df):
     """Làm sạch dữ liệu: xử lý sold_count và điền giá trị khuyết."""
     temp_df = df.copy()
     
-    # 1. Xử lý sold_count (VD: 'Đã bán 1.2k' -> 1200)
+    # 1. Xử lý sold_count 
     def parse_sold_count(value):
         if pd.isna(value): return 0
         val_str = str(value).lower().replace('đã bán', '').replace('.', '').replace(',', '').strip()
@@ -42,10 +41,9 @@ def feature_engineering(df):
     """Trích xuất Brand, tính Discount và tạo các biến mục tiêu Log."""
     df_fe = df.copy()
     
-    # Trích xuất Brand
     df_fe['brand'] = df_fe['product_name'].apply(lambda x: str(x).split()[0].upper())
     
-    # Tính toán actual_discount (Chỉ dùng làm Feature cho bài toán Sales)
+    # Tính toán actual_discount 
     df_fe['actual_discount'] = (df_fe['price_original'] - df_fe['price_current']) / df_fe['price_original']
     
     # Trích xuất thời gian
@@ -58,11 +56,9 @@ def feature_engineering(df):
     return df_fe
 
 def handle_outliers(df, column):
-    """Giới hạn ngoại lai bằng IQR Clipping (Phiên bản an toàn)"""
-    # TẠO BẢN SAO ĐỂ TRÁNH THAY ĐỔI DỮ LIỆU GỐC
+    """Giới hạn ngoại lai bằng IQR Clipping"""
     df_out = df.copy() 
     
-    # Nếu truyền vào một chuỗi (tên cột), chuyển nó thành list để xử lý đồng nhất
     if isinstance(column, str):
         column = [column]
         
@@ -74,7 +70,6 @@ def handle_outliers(df, column):
             lower_bound = Q1 - 1.5 * IQR
             upper_bound = Q3 + 1.5 * IQR
             
-            # Clipping
             df_out[col] = df_out[col].clip(lower=lower_bound, upper=upper_bound)
             
     return df_out
@@ -87,13 +82,11 @@ def final_preprocessing_pipeline(df, task='price', save_path='../data/model/'):
     """
     if task == 'price':
         target = 'log_price'
-        # KHÔNG bao gồm actual_discount
         features = ['brand', 'category_id', 'shop_id', 'is_mall', 'price_original', 
                     'rating', 'review_count', 'day_of_week']
         num_scale = ['price_original', 'review_count']
     else:
         target = 'log_sold_count'
-        # BAO GỒM giá hiện tại và discount để dự báo sức mua
         features = ['brand', 'category_id', 'shop_id', 'is_mall', 'price_current', 
                     'rating', 'review_count', 'actual_discount', 'day_of_week']
         num_scale = ['price_current', 'review_count', 'actual_discount']
@@ -101,22 +94,22 @@ def final_preprocessing_pipeline(df, task='price', save_path='../data/model/'):
     X = df[features].copy()
     y = df[target]
     
-    # 1. Label Encoding cho các biến định danh
+    # Label Encoding cho các biến định danh
     le = LabelEncoder()
     for col in ['brand', 'category_id', 'shop_id']:
         X[col] = le.fit_transform(X[col].astype(str))
         
-    # 2. Chia tập dữ liệu (70% Train - 10% Val - 20% Test)
+    # Chia tập dữ liệu (70% Train - 10% Val - 20% Test)
     X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.125, random_state=42)
     
-    # 3. Scaling (Chỉ fit trên tập Train)
+    # Scaling 
     scaler = StandardScaler()
     X_train[num_scale] = scaler.fit_transform(X_train[num_scale])
     X_val[num_scale] = scaler.transform(X_val[num_scale])
     X_test[num_scale] = scaler.transform(X_test[num_scale])
     
-    # 4. Lưu trữ dữ liệu
+    # Lưu trữ dữ liệu
     task_path = os.path.join(save_path, task)
     os.makedirs(task_path, exist_ok=True)
     
@@ -129,5 +122,5 @@ def final_preprocessing_pipeline(df, task='price', save_path='../data/model/'):
         
     joblib.dump(scaler, os.path.join(task_path, f'{task}_scaler.pkl'))
     
-    print(f"✅ Đã lưu dữ liệu bài toán [{task.upper()}] vào: {task_path}")
+    print(f"Đã lưu dữ liệu bài toán [{task.upper()}] vào: {task_path}")
     return X_train, X_val, X_test, y_train, y_val, y_test, scaler

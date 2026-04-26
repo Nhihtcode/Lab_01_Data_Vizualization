@@ -45,7 +45,6 @@ def evaluate_model(model, X_test, y_test):
     }, y_true, y_pred
 
 def plot_advanced_evaluation(y_true, y_pred, title="Model Evaluation"):
-    """Bộ 3 biểu đồ đánh giá chuyên nghiệp"""
     fig, ax = plt.subplots(1, 3, figsize=(20, 6))
     
     # 1. Actual vs Predicted Scatter
