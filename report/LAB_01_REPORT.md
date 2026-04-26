@@ -360,7 +360,216 @@ So sánh giá dưới 9 vs giá tròn trên 3.200 sản phẩm:
 
 ---
 
-## 5. TÀI LIỆU THAM KHẢO
+## 5. HỌC MÁY (MACHINE LEARNING)
+
+### 5.1 Mục tiêu và Động lực
+
+Phần này mô tả kế hoạch và chiến lược áp dụng các mô hình học máy để nâng cao giá trị của dự án vượt ngoài phân tích thống kê truyền thống. Các mô hình ML sẽ giúp:
+
+- **Dự đoán lượt bán**: Xây dựng mô hình hồi quy để dự báo lượt bán sản phẩm dựa trên các đặc trưng (giá, rating, discount, chất lượng trưng bày).
+- **Phân loại sản phẩm**: Xây dựng mô hình phân loại (classification) để phân định sản phẩm thuộc nhóm bán chạy hay chậm dựa trên các chỉ số.
+- **Tối ưu hóa chiến lược giá**: Sử dụng mô hình để xác định mức giá tối ưu cho từng danh mục sản phẩm nhằm tối đa hóa doanh thu.
+- **Nhân diện xu hướng**: Phát hiện các pattern ẩn trong dữ liệu (clustering) để xác định nhóm khách hàng, sản phẩm, hoặc thời gian mua có đặc điểm riêng.
+
+### 5.2 Các mô hình ML được lên kế hoạch
+
+**Mô hình 1: Hồi quy tuyến tính đa biến (Multiple Linear Regression)**
+
+Mục tiêu: Dự đoán `sold_count` (lượt bán) dựa trên các biến độc lập.
+
+Đặc trưng (Features) được sử dụng:
+- `price_current`, `price_original`, `discount_percent`: Thông tin về giá
+- `image_count`, `has_video`, `review_with_image_count`: Chất lượng trưng bày
+- `rating`, `review_count`: Chỉ số đánh giá
+- `is_mall`, `shop_rating`, `follower_count`: Uy tín cửa hàng/shop
+- `category`: Danh mục sản phẩm (one-hot encoding)
+
+Công thức: $\text{sold\_count} = \beta_0 + \beta_1 \cdot \text{price} + \beta_2 \cdot \text{rating} + \ldots + \epsilon$
+
+Kỳ vọng: R² > 0.65 (giải thích ≥65% phương sai lượt bán).
+
+---
+
+**Mô hình 2: Hồi quy Polynomial/Non-linear**
+
+Mục tiêu: Nắm bắt mối quan hệ phi tuyến giữa giá và lượt bán (elasticity).
+
+Đặc trưng: Sử dụng lại các đặc trưng từ mô hình 1, nhưng thêm các hạng bậc cao:
+- `price²`, `price³` để mô phỏng hiệu ứng giảm dần của giá
+- `rating²` để nắm bắt bất tối ưu của rating quá cao hoặc quá thấp
+
+Công thức: $\text{sold\_count} = \beta_0 + \sum_{i=1}^{p} \beta_i \cdot x_i + \sum_{j=1}^{k} \gamma_j \cdot x_i^2 + \epsilon$
+
+Kỳ vọng: Cải thiện R² so với hồi quy tuyến tính (ΔR² > 0.05).
+
+---
+
+**Mô hình 3: Phân loại nhị phân (Binary Classification - Logistic Regression / Random Forest)**
+
+Mục tiêu: Phân loại sản phẩm thành hai nhóm:
+- Nhóm "Bán chạy" (High-seller): `sold_count` ≥ median (1.562 lượt/sản phẩm)
+- Nhóm "Bán chậm" (Low-seller): `sold_count` < median
+
+Đặc trưng: Tương tự như hồi quy, sử dụng toàn bộ 12-15 đặc trưng.
+
+Mô hình thứ nhất: **Logistic Regression** - Dễ diễn giải, phù hợp cho baseline.
+
+Mô hình thứ hai: **Random Forest / Gradient Boosting** - Độ chính xác cao hơn, xử lý phi tuyến tốt.
+
+Độ đo hiệu suất:
+- Accuracy: Tỷ lệ phân loại đúng
+- Precision & Recall: Độ chính xác và khả năng phát hiện
+- F1-Score: Trung bình điều hòa
+- ROC-AUC: Đánh giá tổng thể
+
+Kỳ vọng: Accuracy > 75%, AUC > 0.80.
+
+---
+
+**Mô hình 4: Phân cụm (Clustering - K-Means / Hierarchical Clustering)**
+
+Mục tiêu: Phát hiện các nhóm sản phẩm có tính chất giống nhau mà không cần nhãn lớp.
+
+Đặc trưng: Sử dụng các đặc trưng chuẩn hóa (normalized):
+- `price_normalized`
+- `rating_normalized`
+- `sold_count_normalized`
+- `discount_percent_normalized`
+- `review_count_normalized`
+
+Phương pháp:
+- **K-Means**: Nhanh, phù hợp cho dataset lớn (6.500+)
+- Xác định số cụm (K) bằng Elbow Method hoặc Silhouette Score
+- Kỳ vọng: K = 3-5 cụm
+
+Giải thích kết quả:
+- Cụm 1: Sản phẩm cao cấp, giá cao, rating cao, bán ít (luxury segment)
+- Cụm 2: Sản phẩm bình dân, giá vừa, rating vừa, bán vừa (mid-range)
+- Cụm 3: Sản phẩm rẻ, giá thấp, rating thấp, bán nhiều (budget segment)
+- ...
+
+---
+
+**Mô hình 5: Mô hình Ensemble (Stacking / Voting)**
+
+Mục tiêu: Kết hợp sức mạnh của nhiều mô hình để tăng độ chính xác.
+
+Thành phần:
+- Base learners: Linear Regression, Random Forest, Gradient Boosting, SVM
+- Meta-learner: Logistic Regression hoặc Linear Regression
+
+Lợi ích: Giảm overfitting, tăng tính tổng quát của mô hình.
+
+### 5.3 Quy trình xây dựng mô hình (Pipeline)
+
+**Bước 1: Chuẩn bị dữ liệu**
+- Chia dataset: 70% training, 15% validation, 15% test
+- Chuẩn hóa (normalize/standardize) các đặc trưng số
+- Mã hóa (encoding) các đặc trưng phân loại (category, is_mall, etc.)
+- Xử lý mất cân bằng dữ liệu nếu cần (oversampling/undersampling)
+
+**Bước 2: Lựa chọn đặc trưng (Feature Selection)**
+- Phương pháp: Correlation analysis, Recursive Feature Elimination (RFE), Tree-based Feature Importance
+- Mục tiêu: Giữ lại 10-12 đặc trưng quan trọng nhất, loại bỏ collinearity
+
+**Bước 3: Huấn luyện mô hình (Model Training)**
+- Huấn luyện từng mô hình trên tập training
+- Tinh chỉnh hyperparameter bằng Grid Search hoặc Random Search
+- Đánh giá hiệu suất trên tập validation
+
+**Bước 4: Đánh giá và so sánh**
+- Đánh giá toàn bộ mô hình trên tập test (unseen data)
+- So sánh kết quả giữa các mô hình
+- Chọn mô hình tốt nhất dựa trên độ đo hiệu suất
+
+**Bước 5: Giải thích mô hình (Model Interpretability)**
+- Sử dụng SHAP hoặc LIME để giải thích quyết định của mô hình
+- Xác định đặc trưng nào có tác động lớn nhất đến dự báo
+- Tạo biểu đồ Feature Importance
+
+### 5.4 Kỳ vọng kết quả và ứng dụng
+
+**Kết quả dự kiến:**
+
+| Mô hình | Độ đo chính | Kỳ vọng | Ghi chú |
+|---------|-----------|--------|--------|
+| Linear Regression | R² Score | > 0.65 | Baseline mô hình hồi quy |
+| Polynomial Regression | R² Score | > 0.70 | Nắm bắt phi tuyến |
+| Logistic Regression (Classification) | Accuracy | > 75% | Baseline phân loại |
+| Random Forest | Accuracy + AUC | > 78% + 0.82 | Mô hình mạnh |
+| K-Means Clustering | Silhouette Score | > 0.50 | Chất lượng phân cụm |
+| Ensemble Model | Accuracy + AUC | > 80% + 0.85 | Mô hình tổng hợp tốt nhất |
+
+**Ứng dụng thực tiễn:**
+
+1. **Dự báo doanh số**: Giúp Tiki dự báo lượt bán sản phẩm mới hoặc sản phẩm mùa vụ, từ đó tối ưu hóa tồn kho.
+
+2. **Phân loại sản phẩm**: Tự động xác định sản phẩm nào có tiềm năng cao và cần được ưu tiên trong marketing/khuyến mãi.
+
+3. **Tối ưu giá**: Sử dụng mô hình để đề xuất mức giá tối ưu cho từng sản phẩm dựa trên đặc trưng và demand.
+
+4. **Segmentation**: Phân nhóm sản phẩm theo segment để thiết kế chiến lược marketing khác nhau.
+
+5. **Hỗ trợ quyết định**: Cung cấp insight cho quản lý để đưa ra quyết định chiến lược bán hàng dựa trên dự báo ML.
+
+### 5.5 Lịch trình và phân công
+
+**Giai đoạn 1 (Tuần 1-2)**: Chuẩn bị dữ liệu và Feature Engineering
+- **Đảm nhiệm**: Thịnh + Tuấn
+- **Công việc**: Chia train/test, chuẩn hóa, mã hóa, lựa chọn đặc trưng
+
+**Giai đoạn 2 (Tuần 2-3)**: Xây dựng mô hình hồi quy
+- **Đảm nhiệm**: Tuấn + Ý
+- **Công việc**: Hồi quy tuyến tính, hồi quy polynomial, đánh giá R²
+
+**Giai đoạn 3 (Tuần 3-4)**: Xây dựng mô hình phân loại
+- **Đảm nhiệm**: Thế Anh + Dương
+- **Công việc**: Logistic Regression, Random Forest, đánh giá Accuracy/AUC
+
+**Giai đoạn 4 (Tuần 4-5)**: Phân cụm và Ensemble
+- **Đảm nhiệm**: Ý + Dương
+- **Công việc**: K-Means clustering, stacking ensemble, kiểm tra chất lượng
+
+**Giai đoạn 5 (Tuần 5-6)**: Tích hợp vào Dashboard
+- **Đảm nhiệm**: Thịnh + Thế Anh
+- **Công việc**: Thêm tab ML prediction, tạo UI cho dự báo, giải thích kết quả
+
+**Giai đoạn 6 (Tuần 6-7)**: Báo cáo và Tối ưu hóa
+- **Đảm nhiệm**: Toàn nhóm
+- **Công việc**: Viết báo cáo chi tiết, tối ưu hóa hiệu suất, chuẩn bị trình bày
+
+### 5.6 Công nghệ và Thư viện ML
+
+**Thư viện Python chính**:
+- **scikit-learn**: Các mô hình ML cơ bản (Linear Regression, Logistic Regression, Random Forest, K-Means)
+- **XGBoost / LightGBM**: Gradient Boosting models (hiệu suất cao)
+- **TensorFlow / Keras**: Deep Learning (nếu cần mô hình phức tạp)
+- **SHAP**: Giải thích mô hình (model interpretability)
+- **Optuna / Hyperopt**: Tinh chỉnh hyperparameter tự động
+
+**Công cụ đánh giá**:
+- **Pandas / NumPy**: Xử lý dữ liệu
+- **Matplotlib / Seaborn**: Trực quan hóa kết quả mô hình
+- **Plotly**: Biểu đồ tương tác trong dashboard
+
+**Tích hợp trong Dashboard**:
+- Thêm tab "Dự báo & ML" trong Streamlit app
+- Cho phép người dùng nhập thông tin sản phẩm mới để dự báo lượt bán
+- Hiển thị feature importance, model performance, predictions
+
+### 5.7 Rủi ro và Cách khắc phục
+
+| Rủi ro | Tác động | Cách khắc phục |
+|--------|---------|---------------|
+| Overfitting | Mô hình hoạt động tốt trên train nhưng kém trên test | Cross-validation, regularization, giảm độ phức tạp mô hình |
+| Imbalanced data | Nếu lớp "Bán chạy" vs "Bán chậm" không cân bằng | SMOTE, class_weight, F1-score thay vì accuracy |
+| Feature correlation | Multicollinearity làm giảm hiệu suất | VIF check, PCA, loại bỏ feature dư thừa |
+| Thời gian training | Tập dữ liệu lớn (6.500+) có thể mất lâu | Sử dụng xử lý song song, lựa chọn mô hình nhanh trước |
+| Outliers | Mô hình nhạy cảm với ngoại lai | Đã xử lý ở giai đoạn 3 (section 3.3) |
+
+---
+
+## 6. TÀI LIỆU THAM KHẢO
 
 ### Thư viện Python
 - **Web Scraping**: BeautifulSoup4, Selenium, requests

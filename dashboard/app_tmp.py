@@ -1,4 +1,4 @@
-from numpy.compat import Path
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import numpy as np
