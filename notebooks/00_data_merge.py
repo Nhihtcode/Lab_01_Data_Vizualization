@@ -55,6 +55,6 @@ products["price_bucket"] = products["price_current"].apply(get_bucket)
 # Cell 5 — Lưu
 out_path = PROCESSED_DIR / "fact_product_merged.csv"
 products.to_csv(out_path, index=False, encoding="utf-8-sig")
-print(f"\n✅ Đã lưu {len(products)} dòng → {out_path}")
+print(f"\nĐã lưu {len(products)} dòng → {out_path}")
 print(f"\nThống kê crawled_by:")
 print(products["crawled_by"].value_counts())

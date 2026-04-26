@@ -7,7 +7,7 @@
 ## 📋 Phân công nhiệm vụ
 
 ### 1. Nhiệm vụ thành viên (General Tasks)
-- **Cào dữ liệu**: Mỗi người dùng template `crawlers/shopee_crawler.py` (kế thừa `helpers.py`) để thu thập dữ liệu phục vụ cho **2 mục tiêu SMART** riêng.
+- **Cào dữ liệu**: Mỗi người dùng template `crawlers/tiki_crawler.py` (kế thừa `helpers.py`) để thu thập dữ liệu phục vụ cho **2 mục tiêu SMART** riêng.
 - **Tiền xử lý**: Tự làm sạch (missing values, outliers), ép kiểu dữ liệu chuẩn và tính các cột derived trong Notebook cá nhân (`notebooks/0x_eda_*.ipynb`).
 - **Lưu trữ**: File thô lưu vào `data/raw/` theo đúng quy ước đặt tên để Lead merge.
 
@@ -30,7 +30,7 @@ LAB_01/
 ├── crawlers/
 │   ├── utils/
 │   │   └── helpers.py          ← Hàm dùng chung (parse_price, get_timestamp...)
-│   └── shopee_crawler.py       ← Template crawler (mỗi người copy & chỉnh)
+│   └── tiki_crawler.py         ← Template crawler (mỗi người copy & chỉnh)
 ├── notebooks/
 │   ├── 00_data_merge.py        ← Merge & validate dữ liệu toàn nhóm
 │   ├── 01_eda_thinh.ipynb      ← EDA của THỊNH
@@ -53,9 +53,9 @@ pip install -r requirements.txt
 
 ## Cào dữ liệu
 
-1. Copy `crawlers/shopee_crawler.py`
+1. Copy `crawlers/tiki_crawler.py`
 2. Chỉnh `CRAWLED_BY` (tên bạn) và `CATEGORY_ID` (danh mục bạn cào)
-3. Chạy: `python crawlers/shopee_crawler.py`
+3. Chạy: `python crawlers/tiki_crawler.py`
 4. File CSV tự động lưu vào `data/raw/`
 
 ### Phân công danh mục (tránh trùng lặp)
@@ -83,7 +83,7 @@ streamlit run dashboard/app.py
 ```
 fact_product_{platform}_{YYYYMMDD}_{tên}.csv
 ```
-Ví dụ: `fact_product_shopee_20260325_tuan.csv`
+Ví dụ: `fact_product_tiki_20260325_tuan.csv`
 
 ## Quy ước push lên github
 
