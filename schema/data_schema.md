@@ -1,7 +1,6 @@
 # Data Schema - Lab 01
 
 > **Bài toán chung**: "Tối ưu hóa chiến lược giá và nâng cao tỷ lệ chuyển đổi khách hàng trên TMĐT"  
-> **Nhóm**: 13
 
 ---
 
@@ -18,7 +17,6 @@ dim_platform (top)
         +-- fact_review
         +-- bridge_product_promotion
         
-Note: No separate orders table needed; use sold_count and shipping in fact_product
 - `dim_*`: dữ liệu tham chiếu ít thay đổi (sàn, danh mục, gian hàng)
 - `fact_product`: bảng chính, mỗi dòng = 1 sản phẩm tại 1 thời điểm cào
 - `fact_review`: chi tiết từng lượt đánh giá
@@ -84,8 +82,6 @@ Note: No separate orders table needed; use sold_count and shipping in fact_produ
 ---
 
 ## 5. `fact_product` - Sản phẩm (Bảng trung tâm)
-
-> Mỗi dòng = 1 sản phẩm tại 1 thời điểm cào.
 
 ### 5.1 Khóa & liên kết
 
